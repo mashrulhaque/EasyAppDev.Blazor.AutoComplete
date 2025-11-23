@@ -1,0 +1,81 @@
+@namespace EasyAppDev.Blazor.AutoComplete
+@typeparam TItem
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+
+@if (Items != null && Items.Any())
+{
+    @if (EnableVirtualization && Items.Count() > VirtualizationThreshold)
+    {
+        <Virtualize Items="@Items.ToList()"
+                    Context="item"
+                    ItemSize="@ItemHeight"
+                    OverscanCount="@OverscanCount">
+            <ItemContent>
+                @ItemTemplate(item)
+            </ItemContent>
+            <Placeholder>
+                <div class="ebd-ac-item ebd-ac-placeholder" style="height: @(ItemHeight)px">
+                    @if (PlaceholderTemplate != null)
+                    {
+                        @PlaceholderTemplate
+                    }
+                    else
+                    {
+                        <span class="ebd-ac-loading">Loading...</span>
+                    }
+                </div>
+            </Placeholder>
+        </Virtualize>
+    }
+    else
+    {
+        @foreach (var item in Items)
+        {
+            @ItemTemplate(item)
+        }
+    }
+}
+
+@code {
+    /// <summary>
+    /// Template for rendering each item in the list.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public required RenderFragment<TItem> ItemTemplate { get; set; }
+
+    /// <summary>
+    /// The collection of items to display.
+    /// </summary>
+    [Parameter]
+    public IEnumerable<TItem>? Items { get; set; }
+
+    /// <summary>
+    /// Whether to enable virtualization for large lists.
+    /// </summary>
+    [Parameter]
+    public bool EnableVirtualization { get; set; } = true;
+
+    /// <summary>
+    /// Minimum number of items required before virtualization is enabled.
+    /// </summary>
+    [Parameter]
+    public int VirtualizationThreshold { get; set; } = 100;
+
+    /// <summary>
+    /// Height of each item in pixels (required for virtualization).
+    /// </summary>
+    [Parameter]
+    public float ItemHeight { get; set; } = 40f;
+
+    /// <summary>
+    /// Number of items to render outside the visible area for smooth scrolling.
+    /// </summary>
+    [Parameter]
+    public int OverscanCount { get; set; } = 5;
+
+    /// <summary>
+    /// Custom template for placeholder items while loading.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? PlaceholderTemplate { get; set; }
+}

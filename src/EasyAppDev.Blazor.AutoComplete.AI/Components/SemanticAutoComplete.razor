@@ -1,0 +1,50 @@
+@namespace EasyAppDev.Blazor.AutoComplete.AI
+@typeparam TItem
+@using EasyAppDev.Blazor.AutoComplete
+@using Microsoft.Extensions.AI
+
+@if (_dataSource != null)
+{
+    <AutoComplete TItem="TItem"
+                  DataSource="@_dataSource"
+                  TextField="@TextField"
+                  Value="@Value"
+                  ValueChanged="@OnValueChanged"
+                  Placeholder="@Placeholder"
+                  MinSearchLength="@MinSearchLength"
+                  DebounceMs="@DebounceMs"
+                  ItemTemplate="@ItemTemplate"
+                  NoResultsTemplate="@NoResultsTemplate"
+                  LoadingTemplate="@LoadingTemplate"
+                  HeaderTemplate="@HeaderTemplate"
+                  FooterTemplate="@FooterTemplate"
+                  Theme="@Theme"
+                  AllowClear="@AllowClear"
+                  Disabled="@Disabled"
+                  MaxDisplayedItems="@MaxDisplayedItems"
+                  Virtualize="@Virtualize"
+                  VirtualizationThreshold="@VirtualizationThreshold"
+                  ItemHeight="@ItemHeight"
+                  AriaLabel="@AriaLabel" />
+
+    @if (ShowCacheStatus && _dataSource != null)
+    {
+        <div class="ebd-ac-cache-status">
+            <small class="text-muted">
+                Cached embeddings: @_dataSource.CachedItemCount
+                @if (!string.IsNullOrEmpty(_dataSource.LastError))
+                {
+                    <span class="text-danger ms-2">⚠️ @_dataSource.LastError</span>
+                }
+            </small>
+        </div>
+    }
+}
+else if (ShowConfigurationWarning)
+{
+    <div class="alert alert-warning">
+        <strong>⚠️ Semantic search not available</strong>
+        <p>OpenAI API key is required for semantic search. Please configure your embedding generator in Program.cs:</p>
+        <pre><code>builder.Services.AddAutoCompleteSemanticSearch(builder.Configuration);</code></pre>
+    </div>
+}

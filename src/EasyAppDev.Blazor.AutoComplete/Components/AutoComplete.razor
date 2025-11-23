@@ -1,0 +1,183 @@
+@namespace EasyAppDev.Blazor.AutoComplete
+@typeparam TItem
+@using EasyAppDev.Blazor.AutoComplete.Filtering
+@using EasyAppDev.Blazor.AutoComplete.Options
+
+<div class="ebd-ac-container @_themeClasses @ThemeClass @BootstrapThemeClass @ThemePresetClass @GetValidationClass()"
+     style="@_themeStyle"
+     dir="@DirectionAttribute">
+
+    @* Screen reader status announcements *@
+    <div id="@_statusId" aria-live="polite" aria-atomic="true" class="sr-only">
+        @if (_isLoading)
+        {
+            <text>Loading results, please wait...</text>
+        }
+        else if (_isDropdownOpen && !_filteredItems.Any() && !_groupedItems.Any() && !string.IsNullOrEmpty(_searchText))
+        {
+            <text>No results found for "@_searchText"</text>
+        }
+        else if (_isDropdownOpen && (_filteredItems.Any() || _groupedItems.Any()))
+        {
+            var count = HasGrouping ? _groupedItems.Sum(g => g.Count()) : _filteredItems.Count;
+            <text>@count @(count == 1 ? "result" : "results") available</text>
+        }
+    </div>
+
+    <div class="ebd-ac-input-wrapper">
+        <input type="text"
+               id="@_inputIdValue"
+               class="ebd-ac-input"
+               placeholder="@Placeholder"
+               value="@_searchText"
+               @oninput="OnSearchTextChanged"
+               @onkeydown="HandleKeyDown"
+               @onkeydown:preventDefault="@_shouldPreventDefault"
+               @onfocus="OnFocusIn"
+               @onblur="OnFocusOut"
+               disabled="@Disabled"
+               aria-label="@(AriaLabel ?? Placeholder ?? "Search")"
+               aria-autocomplete="list"
+               aria-expanded="@_isDropdownOpen.ToString().ToLower()"
+               aria-haspopup="listbox"
+               aria-controls="@(_isDropdownOpen ? _listboxId : null)"
+               aria-activedescendant="@_activeDescendantId"
+               aria-busy="@_isLoading.ToString().ToLower()"
+               aria-invalid="@HasValidationErrors().ToString().ToLower()"
+               aria-describedby="@(HasValidationErrors() ? _errorId : null)"
+               role="combobox" />
+
+        @if (AllowClear && !string.IsNullOrEmpty(_searchText))
+        {
+            <button type="button"
+                    class="ebd-ac-clear-btn"
+                    @onclick="ClearSearch"
+                    aria-label="Clear search input">
+                <span aria-hidden="true">×</span>
+            </button>
+        }
+    </div>
+
+    @* Validation error messages *@
+    @if (HasValidationErrors())
+    {
+        <div id="@_errorId" class="ebd-ac-error-messages" role="alert">
+            @foreach (var message in EditContext?.GetValidationMessages(_fieldIdentifier) ?? Enumerable.Empty<string>())
+            {
+                <span class="ebd-ac-error-message">@message</span>
+            }
+        </div>
+    }
+
+    @if (_isDropdownOpen && _isLoading)
+    {
+        <div class="ebd-ac-dropdown">
+            @if (LoadingTemplate != null)
+            {
+                @LoadingTemplate
+            }
+            else
+            {
+                <div class="ebd-ac-loading" role="status" aria-label="Loading results">
+                    <span class="ebd-ac-spinner" aria-hidden="true"></span>
+                    <span>Loading...</span>
+                </div>
+            }
+        </div>
+    }
+    else if (_isDropdownOpen && (HasGrouping ? _groupedItems.Any() : _filteredItems.Any()))
+    {
+        <div class="ebd-ac-dropdown">
+            @if (HeaderTemplate != null)
+            {
+                <div class="ebd-ac-header">
+                    @HeaderTemplate
+                </div>
+            }
+
+            @if (HasGrouping)
+            {
+                <ul id="@_listboxId" class="ebd-ac-list" role="listbox" aria-label="@(AriaLabel ?? "Autocomplete results")">
+                    @{
+                        var globalIndex = 0;
+                    }
+                    @foreach (var group in _groupedItems)
+                    {
+                        <li role="presentation" class="ebd-ac-group">
+                            <div class="ebd-ac-group-header" role="heading" aria-level="3">
+                                @if (GroupTemplate != null)
+                                {
+                                    @GroupTemplate(group)
+                                }
+                                else
+                                {
+                                    <strong>@group.Key</strong>
+                                    <span class="ebd-ac-group-count" aria-label="@group.Count() items">(@group.Count())</span>
+                                }
+                            </div>
+                            @foreach (var item in group)
+                            {
+                                var currentIndex = globalIndex++;
+                                @RenderItemWithIndex(item, currentIndex)
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <ul id="@_listboxId" class="ebd-ac-list" role="listbox" aria-label="@(AriaLabel ?? "Autocomplete results")">
+                    @{
+                        var index = 0;
+                        foreach (var item in _filteredItems.Take(MaxDisplayedItems))
+                        {
+                            var currentIndex = index++;
+                            @RenderItemWithIndex(item, currentIndex)
+                        }
+                    }
+                </ul>
+            }
+
+            @if (FooterTemplate != null)
+            {
+                <div class="ebd-ac-footer">
+                    @FooterTemplate
+                </div>
+            }
+        </div>
+    }
+    else if (_isDropdownOpen && !_filteredItems.Any() && !_groupedItems.Any() && !string.IsNullOrEmpty(_searchText))
+    {
+        <div class="ebd-ac-dropdown">
+            @if (NoResultsTemplate != null)
+            {
+                @NoResultsTemplate
+            }
+            else
+            {
+                <div class="ebd-ac-no-results">No results found</div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private RenderFragment RenderItemWithIndex(TItem item, int index) => @<li
+        id="@GetItemId(index)"
+        class="ebd-ac-item @(IsSelected(item) ? "selected" : "") @(IsKeyboardSelected(item, index) ? "keyboard-selected" : "")"
+        role="option"
+        aria-selected="@IsSelected(item).ToString().ToLower()"
+        @onclick="() => SelectItem(item)"
+        @onmousedown:preventDefault
+        @onmouseenter="() => HandleMouseEnter(index)">
+
+        @if (DisplayMode == ItemDisplayMode.Custom && ItemTemplate != null)
+        {
+            @ItemTemplate(item)
+        }
+        else
+        {
+            @_displayModeRenderer.Render(item, _renderContext)
+        }
+    </li>;
+}

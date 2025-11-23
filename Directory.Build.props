@@ -1,0 +1,45 @@
+<Project>
+  <PropertyGroup>
+    <!-- Multi-targeting for .NET 8 and .NET 9 -->
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Trimming & AOT -->
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
+    <IsAotCompatible>true</IsAotCompatible>
+
+    <!-- Package Metadata -->
+    <Authors>EasyAppDev</Authors>
+    <Company>EasyAppDev</Company>
+    <Product>Blazor AutoComplete</Product>
+    <Description>A high-performance, feature-rich AutoComplete component for Blazor applications with AI-powered semantic search capabilities</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/mashrulhaque/EasyAppDev.Blazor.AutoComplete</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/mashrulhaque/EasyAppDev.Blazor.AutoComplete</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>blazor;autocomplete;component;ai;semantic-search;performance;trimming;aot;wcag;accessibility;theming;virtualization</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <Version>1.0.0</Version>
+    <PackageReleaseNotes>Version 1.0.0 - First stable release with core AutoComplete functionality, AI semantic search, 4 theme presets, 7 display modes, and full AOT compatibility.</PackageReleaseNotes>
+    <Copyright>Copyright (c) 2025 EasyAppDev</Copyright>
+
+    <!-- Documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <!-- Source Link -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+</Project>

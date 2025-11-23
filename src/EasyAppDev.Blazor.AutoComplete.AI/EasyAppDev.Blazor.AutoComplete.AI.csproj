@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <PackageId>EasyAppDev.Blazor.AutoComplete.AI</PackageId>
+    <Description>AI-powered semantic search for Blazor AutoComplete using Microsoft.Extensions.AI. Supports OpenAI, Azure OpenAI, and Ollama with SIMD-accelerated similarity, dual caching (items + queries), and hybrid search. Includes core package.</Description>
+  </PropertyGroup>
+
+  <!-- Package README and Icon -->
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="*" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="*" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="*" />
+    <PackageReference Include="System.Numerics.Tensors" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EasyAppDev.Blazor.AutoComplete\EasyAppDev.Blazor.AutoComplete.csproj" />
+  </ItemGroup>
+
+</Project>

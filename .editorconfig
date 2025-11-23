@@ -1,0 +1,46 @@
+# EasyAppDev.Blazor.AutoComplete EditorConfig
+root = true
+
+# All files
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Code files
+[*.{cs,razor}]
+indent_size = 4
+
+# XML files
+[*.{csproj,props,targets}]
+indent_size = 2
+
+# JSON/YAML
+[*.{json,yml,yaml}]
+indent_size = 2
+
+# Markdown
+[*.md]
+trim_trailing_whitespace = false
+
+# C# code style rules
+[*.cs]
+# Naming conventions
+dotnet_naming_rule.interface_should_be_begins_with_i.severity = warning
+dotnet_naming_rule.interface_should_be_begins_with_i.symbols = interface
+dotnet_naming_rule.interface_should_be_begins_with_i.style = begins_with_i
+
+dotnet_naming_rule.types_should_be_pascal_case.severity = warning
+dotnet_naming_rule.types_should_be_pascal_case.symbols = types
+dotnet_naming_rule.types_should_be_pascal_case.style = pascal_case
+
+# Use var when obvious
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# Expression preferences
+csharp_prefer_simple_using_statement = true:suggestion
+csharp_prefer_braces = true:warning

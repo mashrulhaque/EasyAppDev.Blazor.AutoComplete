@@ -1,0 +1,304 @@
+@page "/theming-demo"
+@rendermode InteractiveServer
+@using EasyAppDev.Blazor.AutoComplete
+@using EasyAppDev.Blazor.AutoComplete.Options
+@using EasyAppDev.Blazor.AutoComplete.Theming
+
+<PageTitle>Theming Demo</PageTitle>
+
+<div class="container-fluid py-4">
+    <h1 class="display-4 mb-3">Theming System</h1>
+    <p class="lead">
+        Interactive demonstration of dynamic theming with 4 design system presets, 51 customizable properties, and zero CSS requirements.
+    </p>
+
+    <!-- Theme Presets -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Design System Presets</h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">4 professionally designed themes with dynamic CSS loading (~2KB each)</p>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <button class="btn @(selectedPreset == ThemePreset.Material ? "btn-primary" : "btn-outline-primary") w-100"
+                            @onclick="() => selectedPreset = ThemePreset.Material">
+                        <strong>Material</strong>
+                        <small class="d-block">Google Design 3</small>
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn @(selectedPreset == ThemePreset.Fluent ? "btn-primary" : "btn-outline-primary") w-100"
+                            @onclick="() => selectedPreset = ThemePreset.Fluent">
+                        <strong>Fluent</strong>
+                        <small class="d-block">Microsoft Windows 11</small>
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn @(selectedPreset == ThemePreset.Modern ? "btn-primary" : "btn-outline-primary") w-100"
+                            @onclick="() => selectedPreset = ThemePreset.Modern">
+                        <strong>Modern</strong>
+                        <small class="d-block">Minimal/Clean</small>
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn @(selectedPreset == ThemePreset.Bootstrap ? "btn-primary" : "btn-outline-primary") w-100"
+                            @onclick="() => selectedPreset = ThemePreset.Bootstrap">
+                        <strong>Bootstrap</strong>
+                        <small class="d-block">Bootstrap 5</small>
+                    </button>
+                </div>
+            </div>
+
+            <AutoComplete TItem="Product"
+                          ThemePreset="@selectedPreset"
+                          EnableThemeTransitions="true"
+                          Items="@products"
+                          TextField="@(p => p.Name)"
+                          DisplayMode="ItemDisplayMode.TitleDescriptionBadge"
+                          DescriptionField="@(p => p.Category)"
+                          BadgeField="@badgeField"
+                          Placeholder="Theme switches with smooth transitions..." />
+        </div>
+    </div>
+
+    <!-- Custom Properties -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Custom Property Overrides (51 Total)</h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Override individual properties without writing CSS</p>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Primary Color</label>
+                    <div class="input-group">
+                        <input type="color" class="form-control form-control-color" @bind="customPrimaryColor" @bind:event="oninput">
+                        <input type="text" class="form-control" @bind="customPrimaryColor" placeholder="#6200EE">
+                        <button class="btn btn-outline-secondary" @onclick="() => customPrimaryColor = null">Reset</button>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Border Radius: @(customBorderRadius ?? "Default")</label>
+                    <input type="range" class="form-range" min="0" max="24" step="2"
+                           value="@(customBorderRadius != null ? int.Parse(customBorderRadius.Replace("px", "")) : 6)"
+                           @oninput="OnBorderRadiusChanged">
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">0px (sharp)</small>
+                        <button class="btn btn-sm btn-link" @onclick="() => customBorderRadius = null">Reset</button>
+                        <small class="text-muted">24px (round)</small>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Font Family</label>
+                    <select class="form-select" @bind="customFontFamily">
+                        <option value="">Theme Default</option>
+                        <option value="system-ui, sans-serif">System UI</option>
+                        <option value="'Inter', sans-serif">Inter</option>
+                        <option value="'Roboto', sans-serif">Roboto</option>
+                        <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Font Size: @(customFontSize ?? "Default")</label>
+                    <input type="range" class="form-range" min="12" max="18" step="1"
+                           value="@(customFontSize != null ? int.Parse(customFontSize.Replace("px", "")) : 14)"
+                           @oninput="OnFontSizeChanged">
+                </div>
+            </div>
+
+            <AutoComplete TItem="Product"
+                          ThemePreset="@selectedPreset"
+                          PrimaryColor="@customPrimaryColor"
+                          BorderRadius="@customBorderRadius"
+                          FontFamily="@(string.IsNullOrEmpty(customFontFamily) ? null : customFontFamily)"
+                          FontSize="@customFontSize"
+                          Items="@products"
+                          TextField="@(p => p.Name)"
+                          DisplayMode="ItemDisplayMode.IconTitleDescription"
+                          IconField="@(p => p.Icon)"
+                          DescriptionField="@(p => p.Description)"
+                          Placeholder="Custom property overrides..." />
+
+            <div class="alert alert-info mt-3 mb-0">
+                <strong>Available Properties (51 total):</strong>
+                <ul class="mb-0 mt-2">
+                    <li><strong>Colors (15):</strong> Primary, Background, Text, TextSecondary, Border, BorderFocus, Hover, Selected, etc.</li>
+                    <li><strong>Spacing (10):</strong> InputPadding, ItemPadding, BorderRadius, DropdownGap, etc.</li>
+                    <li><strong>Typography (8):</strong> FontFamily, FontSize, LineHeight, FontWeight, etc.</li>
+                    <li><strong>Effects (5):</strong> FocusShadow, DropdownShadow, TransitionDuration, etc.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Size Variants -->
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">Component Size Variants</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <h6 class="text-center">Compact (25% smaller)</h6>
+                    <AutoComplete TItem="Product"
+                                  ThemePreset="@selectedPreset"
+                                  Size="ComponentSize.Compact"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  Placeholder="Compact..." />
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-center">Default</h6>
+                    <AutoComplete TItem="Product"
+                                  ThemePreset="@selectedPreset"
+                                  Size="ComponentSize.Default"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  Placeholder="Default..." />
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-center">Large (25% larger)</h6>
+                    <AutoComplete TItem="Product"
+                                  ThemePreset="@selectedPreset"
+                                  Size="ComponentSize.Large"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  Placeholder="Large..." />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Light/Dark/Auto -->
+    <div class="card mb-4">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Theme Modes (Light/Dark/Auto)</h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">All presets support automatic dark mode detection</p>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <h6>Light Mode</h6>
+                    <AutoComplete TItem="Product"
+                                  ThemePreset="@selectedPreset"
+                                  Theme="Theme.Light"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  Placeholder="Light theme..." />
+                </div>
+                <div class="col-md-4">
+                    <h6>Dark Mode</h6>
+                    <AutoComplete TItem="Product"
+                                  ThemePreset="@selectedPreset"
+                                  Theme="Theme.Dark"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  Placeholder="Dark theme..." />
+                </div>
+                <div class="col-md-4">
+                    <h6>Auto (System Preference)</h6>
+                    <AutoComplete TItem="Product"
+                                  ThemePreset="@selectedPreset"
+                                  Theme="Theme.Auto"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  Placeholder="Auto-detect..." />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Code Example -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Usage Examples</h5>
+        </div>
+        <div class="card-body">
+            <h6>Individual Parameters (Simple - Recommended for 1-5 properties)</h6>
+            <pre class="bg-light p-3 small mb-3"><code>&lt;AutoComplete TItem="Product"
+              ThemePreset="ThemePreset.@selectedPreset"
+              PrimaryColor="@(customPrimaryColor ?? "#6200EE")"
+              BorderRadius="@(customBorderRadius ?? "4px")"
+              FontFamily="@(customFontFamily ?? "Roboto, sans-serif")"
+              Items="@@products"
+              TextField="@@(p => p.Name)" /&gt;</code></pre>
+
+            <h6>ThemeOptions Object (Advanced - For 6+ properties)</h6>
+            <pre class="bg-light p-3 small mb-0"><code>&lt;AutoComplete TItem="Product"
+              ThemePreset="ThemePreset.@selectedPreset"
+              ThemeOverrides="new ThemeOptions {
+                  Colors = new ColorOptions { Primary = \"#FF0000\" },
+                  Spacing = new SpacingOptions { BorderRadius = \"8px\" },
+                  Typography = new TypographyOptions { FontSize = \"16px\" }
+              }"
+              Items="@@products" /&gt;</code></pre>
+        </div>
+    </div>
+
+    <!-- Bundle Size Info -->
+    <div class="alert alert-success">
+        <h5>Bundle Size Optimization</h5>
+        <div class="row text-center">
+            <div class="col-md-4">
+                <strong>Base CSS:</strong> 8KB (structural styles, always loaded)
+            </div>
+            <div class="col-md-4">
+                <strong>Active Theme:</strong> +2KB (loaded on-demand)
+            </div>
+            <div class="col-md-4">
+                <strong>Typical Total:</strong> 10KB (optimal)
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private ThemePreset selectedPreset = ThemePreset.Material;
+    private string? customPrimaryColor;
+    private string? customBorderRadius;
+    private string? customFontFamily;
+    private string? customFontSize;
+
+    private System.Linq.Expressions.Expression<Func<Product, string>> badgeField = p => "$" + p.Price.ToString("F2");
+
+    private List<Product> products = new()
+    {
+        new Product { Id = 1, Name = "Laptop Pro", Category = "Electronics", Price = 1299.99m, Description = "High-performance laptop", Icon = "💻" },
+        new Product { Id = 2, Name = "Wireless Mouse", Category = "Electronics", Price = 29.99m, Description = "Ergonomic mouse", Icon = "🖱️" },
+        new Product { Id = 3, Name = "Mechanical Keyboard", Category = "Electronics", Price = 149.99m, Description = "RGB keyboard", Icon = "⌨️" },
+        new Product { Id = 4, Name = "Office Chair", Category = "Furniture", Price = 399.99m, Description = "Ergonomic chair", Icon = "🪑" },
+        new Product { Id = 5, Name = "Standing Desk", Category = "Furniture", Price = 599.99m, Description = "Adjustable desk", Icon = "🖥️" }
+    };
+
+    private void OnBorderRadiusChanged(ChangeEventArgs e)
+    {
+        if (e.Value != null)
+        {
+            customBorderRadius = $"{e.Value}px";
+        }
+    }
+
+    private void OnFontSizeChanged(ChangeEventArgs e)
+    {
+        if (e.Value != null)
+        {
+            customFontSize = $"{e.Value}px";
+        }
+    }
+
+    public class Product
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public string Icon { get; set; } = string.Empty;
+    }
+}

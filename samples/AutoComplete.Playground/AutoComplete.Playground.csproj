@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\EasyAppDev.Blazor.AutoComplete\EasyAppDev.Blazor.AutoComplete.csproj" />
+    <ProjectReference Include="..\..\src\EasyAppDev.Blazor.AutoComplete.AI\EasyAppDev.Blazor.AutoComplete.AI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SemanticKernel" Version="*" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="*" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <NoWarn>SKEXP0010</NoWarn>
+    <!-- Enable trimming for publish -->
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>partial</TrimMode>
+  </PropertyGroup>
+
+</Project>

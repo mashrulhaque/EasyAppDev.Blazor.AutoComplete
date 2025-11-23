@@ -1,0 +1,36 @@
+﻿@page "/"
+
+<PageTitle>Home</PageTitle>
+
+<h1>AutoComplete Trim Test</h1>
+
+<p>Testing AutoComplete component with trimming enabled.</p>
+
+<AutoComplete TItem="string"
+              Items="@countries"
+              TextField="@(x => x)"
+              Placeholder="Select a country..."
+              @bind-Value="@selectedCountry" />
+
+@if (!string.IsNullOrEmpty(selectedCountry))
+{
+    <p>Selected: <strong>@selectedCountry</strong></p>
+}
+
+@code {
+    private string? selectedCountry;
+
+    private List<string> countries = new()
+    {
+        "United States",
+        "United Kingdom",
+        "Canada",
+        "Australia",
+        "Germany",
+        "France",
+        "Japan",
+        "China",
+        "India",
+        "Brazil"
+    };
+}

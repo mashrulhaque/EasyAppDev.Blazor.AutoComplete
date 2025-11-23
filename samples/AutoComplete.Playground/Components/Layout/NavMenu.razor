@@ -1,0 +1,35 @@
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">AutoComplete Playground</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="nav flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="all-features">
+                <span class="bi bi-star-fill-nav-menu" aria-hidden="true"></span> All Features
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="theming-demo">
+                <span class="bi bi-palette-fill-nav-menu" aria-hidden="true"></span> Theming
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="ai-demo">
+                <span class="bi bi-robot-nav-menu" aria-hidden="true"></span> AI Semantic Search
+            </NavLink>
+        </div>
+    </nav>
+</div>

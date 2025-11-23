@@ -1,0 +1,107 @@
+############################
+# Build artifacts
+############################
+bin/
+obj/
+out/
+**/Debug/
+**/Release/
+*.dll
+*.pdb
+
+############################
+# User-specific files
+############################
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.userprefs
+
+############################
+# IDE files
+############################
+.vs/
+.idea/
+*.sln.iml
+
+############################
+# Logs
+############################
+*.log
+
+############################
+# ASP.NET / Blazor files
+############################
+wwwroot/_framework/
+wwwroot/.vite/
+wwwroot/css/app.css.map
+wwwroot/*.gz
+wwwroot/*.br
+wwwroot/build/
+**/dist/
+
+############################
+# Node / Frontend tooling
+############################
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+
+############################
+# Environment Files
+############################
+.env
+.env.*
+*.secret.json
+
+############################
+# Claude / Anthropic
+############################
+.claude/
+claude/
+Claude/
+
+.claude-cache/
+.claude-config.json
+.claude-settings.json
+
+anthropic.env
+anthropic.json
+anthropic.config.json
+
+*.claude.tmp
+*.anthropic.tmp
+*.claude-history
+claude_history.json
+claude_conversation.json
+_framework
+CLAUDE.*
+claude-artifacts/
+*.artifact.json
+
+claude_workspace/
+.claude-workspace/
+
+############################
+# Test & Build Output
+############################
+TestResults/
+publish-output/
+publish-untrimmed/
+publish-trimmed/
+
+############################
+# MCP (Model Context Protocol)
+############################
+.playwright-mcp/
+
+############################
+# System files
+############################
+.DS_Store
+Thumbs.db
+

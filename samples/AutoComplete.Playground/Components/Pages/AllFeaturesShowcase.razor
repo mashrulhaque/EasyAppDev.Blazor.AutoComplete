@@ -1,0 +1,429 @@
+@page "/all-features"
+@rendermode InteractiveServer
+@using EasyAppDev.Blazor.AutoComplete
+@using EasyAppDev.Blazor.AutoComplete.Options
+@using EasyAppDev.Blazor.AutoComplete.Configuration
+
+<PageTitle>All Features Showcase</PageTitle>
+
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">AutoComplete Features Showcase</h1>
+    <p class="lead mb-5">
+        Comprehensive demonstration of all AutoComplete component features based on README.md documentation.
+    </p>
+
+    <!-- Quick Start -->
+    <div class="card mb-5 border-primary">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">Quick Start - Basic Usage</h2>
+        </div>
+        <div class="card-body">
+            <AutoComplete TItem="Product"
+                          Items="@products"
+                          TextField="@(p => p.Name)"
+                          @bind-Value="@selectedBasic"
+                          Placeholder="Search products..." />
+
+            @if (selectedBasic != null)
+            {
+                <div class="alert alert-info mt-3 mb-0">
+                    Selected: <strong>@selectedBasic.Name</strong>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Multi-Field Search -->
+    <div class="card mb-5 border-success">
+        <div class="card-header bg-success text-white">
+            <h2 class="mb-0">Multi-Field Search</h2>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Search across Name, Category, and Description simultaneously</p>
+            <AutoComplete TItem="Product"
+                          Items="@products"
+                          TextField="@(p => p.Name)"
+                          SearchFields="@(p => new[] { p.Name, p.Category, p.Description })"
+                          FilterStrategy="FilterStrategy.Contains"
+                          DisplayMode="ItemDisplayMode.TitleDescriptionBadge"
+                          DescriptionField="@(p => p.Category)"
+                          BadgeField="@badgeField"
+                          @bind-Value="@selectedMultiField"
+                          Placeholder="Try searching 'ergonomic' or 'RGB'..." />
+            <small class="text-muted d-block mt-2">Works with all filter strategies (StartsWith, Contains, Fuzzy)</small>
+        </div>
+    </div>
+
+    <!-- Display Modes -->
+    <div class="card mb-5 border-info">
+        <div class="card-header bg-info text-white">
+            <h2 class="mb-0">7 Built-In Display Modes</h2>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Eliminate custom ItemTemplate boilerplate</p>
+
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <h5>Simple</h5>
+                    <AutoComplete TItem="Product"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  DisplayMode="ItemDisplayMode.Simple"
+                                  Placeholder="Simple mode..." />
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <h5>TitleWithDescription</h5>
+                    <AutoComplete TItem="Product"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  DescriptionField="@(p => p.Category)"
+                                  DisplayMode="ItemDisplayMode.TitleWithDescription"
+                                  Placeholder="Two-line display..." />
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <h5>TitleWithBadge</h5>
+                    <AutoComplete TItem="Product"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  BadgeField="@badgeField"
+                                  DisplayMode="ItemDisplayMode.TitleWithBadge"
+                                  Placeholder="With right-aligned badge..." />
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <h5>IconWithTitle</h5>
+                    <AutoComplete TItem="Product"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  IconField="@(p => p.Icon)"
+                                  DisplayMode="ItemDisplayMode.IconWithTitle"
+                                  Placeholder="With icons..." />
+                </div>
+
+                <div class="col-md-12 mb-4">
+                    <h5>Card Mode (All Fields)</h5>
+                    <AutoComplete TItem="Product"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  IconField="@(p => p.Icon)"
+                                  SubtitleField="@(p => p.Category)"
+                                  DescriptionField="@(p => p.Description)"
+                                  BadgeField="@badgeField"
+                                  DisplayMode="ItemDisplayMode.Card"
+                                  Placeholder="Maximum information density..." />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Strategies -->
+    <div class="card mb-5 border-warning">
+        <div class="card-header bg-warning text-dark">
+            <h2 class="mb-0">Filter Strategies</h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h5>StartsWith (Default)</h5>
+                    <AutoComplete TItem="Product"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  FilterStrategy="FilterStrategy.StartsWith"
+                                  Placeholder="Type 'Lap'..." />
+                    <small class="text-muted">~3ms for 100K items</small>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <h5>Contains</h5>
+                    <AutoComplete TItem="Product"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  FilterStrategy="FilterStrategy.Contains"
+                                  Placeholder="Type 'top'..." />
+                    <small class="text-muted">~2ms for 100K items</small>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <h5>Fuzzy</h5>
+                    <AutoComplete TItem="Product"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  FilterStrategy="FilterStrategy.Fuzzy"
+                                  Placeholder="Try typos: 'laptpo'..." />
+                    <small class="text-muted">~72ms for 100K items</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fluent Configuration -->
+    <div class="card mb-5 border-danger">
+        <div class="card-header bg-danger text-white">
+            <h2 class="mb-0">Fluent Configuration API</h2>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Builder pattern for complex configurations</p>
+            <AutoComplete TItem="Product"
+                          Items="@products"
+                          TextField="@(p => p.Name)"
+                          DisplayMode="ItemDisplayMode.TitleWithDescription"
+                          DescriptionField="@(p => p.Category)"
+                          BootstrapTheme="BootstrapTheme.Success"
+                          @bind-Value="@selectedFluent"
+                          Placeholder="Using individual parameters..." />
+
+            <pre class="bg-light p-3 mt-3 small"><code>var config = AutoCompleteConfig&lt;Product&gt;.Create()
+    .WithItems(products)
+    .WithTextField(p => p.Name)
+    .WithTitleAndDescription(p => p.Category)
+    .WithBootstrapTheme(BootstrapTheme.Success)
+    .Build();</code></pre>
+        </div>
+    </div>
+
+    <!-- Grouping -->
+    <div class="card mb-5 border-secondary">
+        <div class="card-header bg-secondary text-white">
+            <h2 class="mb-0">Grouping</h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <h5>Default Headers</h5>
+                    <AutoComplete TItem="Product"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  GroupBy="@(p => p.Category)"
+                                  DisplayMode="ItemDisplayMode.TitleWithBadge"
+                                  BadgeField="@badgeField"
+                                  Placeholder="Grouped by category..." />
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <h5>Custom Group Template</h5>
+                    <AutoComplete TItem="Product"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  GroupBy="@(p => p.Category)"
+                                  Placeholder="Custom headers...">
+                        <GroupTemplate Context="group">
+                            <div class="p-2 bg-light border-bottom">
+                                <strong>📁 @group.Key</strong>
+                                <span class="badge bg-secondary ms-2">@group.Count()</span>
+                            </div>
+                        </GroupTemplate>
+                    </AutoComplete>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Virtualization -->
+    <div class="card mb-5 border-dark">
+        <div class="card-header bg-dark text-white">
+            <h2 class="mb-0">Virtualization (100K+ Items)</h2>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Handle large datasets efficiently - generates 5,000 items</p>
+            <AutoComplete TItem="Product"
+                          Items="@largeDataset"
+                          TextField="@(p => p.Name)"
+                          FilterStrategy="FilterStrategy.Contains"
+                          Virtualize="true"
+                          VirtualizationThreshold="100"
+                          ItemHeight="40"
+                          DisplayMode="ItemDisplayMode.TitleWithDescription"
+                          DescriptionField="@(p => p.Category)"
+                          Placeholder="Search 5,000 items..." />
+            <small class="text-muted d-block mt-2">Dataset: @largeDataset.Count items (60fps scrolling maintained)</small>
+        </div>
+    </div>
+
+    <!-- Bootstrap Themes -->
+    <div class="card mb-5" style="border-color: #6f42c1;">
+        <div class="card-header text-white" style="background-color: #6f42c1;">
+            <h2 class="mb-0">Bootstrap Theme Variants</h2>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">9 pre-configured Bootstrap 5 color schemes</p>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label"><strong>Primary</strong></label>
+                    <AutoComplete TItem="Product"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  BootstrapTheme="BootstrapTheme.Primary"
+                                  Placeholder="Primary theme..." />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label"><strong>Success</strong></label>
+                    <AutoComplete TItem="Product"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  BootstrapTheme="BootstrapTheme.Success"
+                                  Placeholder="Success theme..." />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label"><strong>Danger</strong></label>
+                    <AutoComplete TItem="Product"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  BootstrapTheme="BootstrapTheme.Danger"
+                                  Placeholder="Danger theme..." />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Options -->
+    <div class="card mb-5" style="border-color: #fd7e14;">
+        <div class="card-header text-white" style="background-color: #fd7e14;">
+            <h2 class="mb-0">Configuration Options</h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h5>MinSearchLength (3)</h5>
+                    <AutoComplete TItem="Product"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  MinSearchLength="3"
+                                  Placeholder="Type 3+ characters..." />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <h5>DebounceMs (1000)</h5>
+                    <AutoComplete TItem="Product"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  DebounceMs="1000"
+                                  Placeholder="1 second delay..." />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <h5>MaxDisplayedItems (5)</h5>
+                    <AutoComplete TItem="Product"
+                                  Items="@products"
+                                  TextField="@(p => p.Name)"
+                                  MaxDisplayedItems="5"
+                                  Placeholder="Max 5 results..." />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Templates -->
+    <div class="card mb-5" style="border-color: #20c997;">
+        <div class="card-header text-white" style="background-color: #20c997;">
+            <h2 class="mb-0">Custom Templates</h2>
+        </div>
+        <div class="card-body">
+            <AutoComplete TItem="Product"
+                          Items="@products"
+                          TextField="@(p => p.Name)"
+                          Placeholder="Custom item template...">
+                <ItemTemplate Context="product">
+                    <div class="d-flex align-items-center p-2">
+                        <span style="font-size: 2rem;" class="me-3">@product.Icon</span>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-primary">@product.Name</div>
+                            <div class="small text-muted">@product.Description</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="badge bg-success">$@product.Price</div>
+                            <div class="small text-muted">@product.Category</div>
+                        </div>
+                    </div>
+                </ItemTemplate>
+                <NoResultsTemplate>
+                    <div class="text-center p-4">
+                        <div style="font-size: 3rem;">🔍</div>
+                        <h5 class="mt-3">No products found</h5>
+                        <p class="text-muted">Try a different search term</p>
+                    </div>
+                </NoResultsTemplate>
+            </AutoComplete>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="alert alert-info">
+        <h4>📊 Features Summary</h4>
+        <div class="row">
+            <div class="col-md-6">
+                <ul>
+                    <li><strong>Display Modes:</strong> 7 built-in modes</li>
+                    <li><strong>Filter Strategies:</strong> StartsWith, Contains, Fuzzy, Custom</li>
+                    <li><strong>Multi-Field Search:</strong> Search across multiple properties</li>
+                    <li><strong>Grouping:</strong> Default and custom templates</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <ul>
+                    <li><strong>Virtualization:</strong> @largeDataset.Count items demo</li>
+                    <li><strong>Bootstrap Themes:</strong> 9 color variants</li>
+                    <li><strong>Fluent API:</strong> 100% parameter coverage</li>
+                    <li><strong>AOT Compatible:</strong> Zero reflection, fully trimmable</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private Product? selectedBasic;
+    private Product? selectedMultiField;
+    private Product? selectedFluent;
+
+    private System.Linq.Expressions.Expression<Func<Product, string>> badgeField = p => "$" + p.Price.ToString("F2");
+
+    private List<Product> products = new()
+    {
+        new Product { Id = 1, Name = "Laptop Pro", Category = "Electronics", Price = 1299.99m, Description = "High-performance laptop with latest processor", Icon = "💻" },
+        new Product { Id = 2, Name = "Wireless Mouse", Category = "Electronics", Price = 29.99m, Description = "Ergonomic wireless mouse with precision tracking", Icon = "🖱️" },
+        new Product { Id = 3, Name = "Mechanical Keyboard", Category = "Electronics", Price = 149.99m, Description = "RGB mechanical keyboard with custom switches", Icon = "⌨️" },
+        new Product { Id = 4, Name = "Office Chair", Category = "Furniture", Price = 399.99m, Description = "Ergonomic office chair with lumbar support", Icon = "🪑" },
+        new Product { Id = 5, Name = "Standing Desk", Category = "Furniture", Price = 599.99m, Description = "Adjustable height standing desk", Icon = "🖥️" },
+        new Product { Id = 6, Name = "Monitor 27\"", Category = "Electronics", Price = 449.99m, Description = "4K UHD monitor with HDR support", Icon = "🖥️" },
+        new Product { Id = 7, Name = "Webcam HD", Category = "Electronics", Price = 79.99m, Description = "1080p HD webcam with autofocus", Icon = "📹" },
+        new Product { Id = 8, Name = "Desk Lamp", Category = "Furniture", Price = 49.99m, Description = "LED desk lamp with adjustable brightness", Icon = "💡" },
+        new Product { Id = 9, Name = "Notebook", Category = "Stationery", Price = 12.99m, Description = "Premium quality lined notebook", Icon = "📓" },
+        new Product { Id = 10, Name = "Pen Set", Category = "Stationery", Price = 24.99m, Description = "Professional pen set with case", Icon = "🖊️" }
+    };
+
+    private List<Product> largeDataset = new();
+
+    protected override void OnInitialized()
+    {
+        // Generate large dataset for virtualization
+        var categories = new[] { "Electronics", "Furniture", "Stationery", "Books", "Clothing" };
+        var prefixes = new[] { "Premium", "Standard", "Budget", "Deluxe", "Classic" };
+        var names = new[] { "Product", "Item", "Article", "Good", "Merchandise" };
+        var icons = new[] { "📦", "🎁", "🛍️", "📱", "💼" };
+
+        for (int i = 0; i < 5000; i++)
+        {
+            largeDataset.Add(new Product
+            {
+                Id = i + 100,
+                Name = $"{prefixes[i % prefixes.Length]} {names[i % names.Length]} {i + 1}",
+                Category = categories[i % categories.Length],
+                Price = (i % 100 + 1) * 10,
+                Description = $"Description for item {i + 1}",
+                Icon = icons[i % icons.Length]
+            });
+        }
+    }
+
+    public class Product
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public string Icon { get; set; } = string.Empty;
+    }
+}

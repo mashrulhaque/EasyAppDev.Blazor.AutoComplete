@@ -1,0 +1,457 @@
+@page "/ai-demo"
+@rendermode InteractiveServer
+@using EasyAppDev.Blazor.AutoComplete.AI
+
+<PageTitle>AI Features Demo</PageTitle>
+
+<h1>AI Features Demo</h1>
+
+<p>Explore AutoComplete component with AI-related use cases and examples.</p>
+
+<div class="playground-section">
+    <h2>AI Model Selection</h2>
+    <p>Select from popular AI models with detailed information</p>
+
+    <AutoComplete TItem="AIModel"
+                  Items="@aiModels"
+                  TextField="@(m => m.Name)"
+                  @bind-Value="@selectedModel"
+                  Placeholder="Search AI models...">
+        <ItemTemplate Context="model">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <div class="fw-bold">@model.Name</div>
+                    <small class="text-muted">@model.Provider • @model.Category</small>
+                    <div class="mt-1">
+                        <small class="text-secondary">@model.Description</small>
+                    </div>
+                </div>
+                <div class="ms-2 text-end">
+                    <span class="badge bg-info">@model.Parameters</span>
+                </div>
+            </div>
+        </ItemTemplate>
+    </AutoComplete>
+
+    @if (selectedModel != null)
+    {
+        <div class="alert alert-primary mt-3">
+            <h5>@selectedModel.Name</h5>
+            <p class="mb-1"><strong>Provider:</strong> @selectedModel.Provider</p>
+            <p class="mb-1"><strong>Category:</strong> @selectedModel.Category</p>
+            <p class="mb-1"><strong>Parameters:</strong> @selectedModel.Parameters</p>
+            <p class="mb-0"><strong>Description:</strong> @selectedModel.Description</p>
+        </div>
+    }
+</div>
+
+<hr class="my-4" />
+
+<div class="playground-section">
+    <h2>Programming Language & Framework</h2>
+    <p>Grouped by category</p>
+
+    <AutoComplete TItem="ProgrammingTech"
+                  Items="@programmingTechs"
+                  TextField="@(t => t.Name)"
+                  GroupBy="@(t => t.Category)"
+                  @bind-Value="@selectedTech"
+                  Placeholder="Search languages and frameworks...">
+        <ItemTemplate Context="tech">
+            <div class="d-flex align-items-center">
+                <span class="me-2">@tech.Icon</span>
+                <div>
+                    <div>@tech.Name</div>
+                    <small class="text-muted">@tech.UseCases</small>
+                </div>
+            </div>
+        </ItemTemplate>
+    </AutoComplete>
+
+    @if (selectedTech != null)
+    {
+        <div class="alert alert-success mt-3">
+            <div class="d-flex align-items-center">
+                <span class="fs-3 me-3">@selectedTech.Icon</span>
+                <div>
+                    <h5 class="mb-1">@selectedTech.Name</h5>
+                    <p class="mb-0"><strong>Category:</strong> @selectedTech.Category</p>
+                    <p class="mb-0"><strong>Use Cases:</strong> @selectedTech.UseCases</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<hr class="my-4" />
+
+<div class="playground-section">
+    <h2>AI Tools & Services</h2>
+    <p>Search through AI tools and services</p>
+
+    <AutoComplete TItem="AITool"
+                  Items="@aiTools"
+                  TextField="@(t => t.Name)"
+                  @bind-Value="@selectedTool"
+                  Placeholder="Search AI tools and services...">
+        <ItemTemplate Context="tool">
+            <div>
+                <div class="fw-bold">@tool.Name</div>
+                <small class="text-muted">@tool.Type - @tool.PricingModel</small>
+                <div class="mt-1">
+                    <small>@tool.Description</small>
+                </div>
+            </div>
+        </ItemTemplate>
+    </AutoComplete>
+
+    @if (selectedTool != null)
+    {
+        <div class="alert alert-info mt-3">
+            <h5>@selectedTool.Name</h5>
+            <p class="mb-1"><strong>Type:</strong> @selectedTool.Type</p>
+            <p class="mb-1"><strong>Pricing:</strong> @selectedTool.PricingModel</p>
+            <p class="mb-0">@selectedTool.Description</p>
+        </div>
+    }
+</div>
+
+<hr class="my-4" />
+
+<div class="playground-section">
+    <h2>Machine Learning Frameworks</h2>
+    <p>Large dataset with virtualization enabled</p>
+
+    <AutoComplete TItem="MLFramework"
+                  Items="@mlFrameworks"
+                  TextField="@(f => f.Name)"
+                  Virtualize="true"
+                  VirtualizationThreshold="20"
+                  ItemHeight="60"
+                  @bind-Value="@selectedFramework"
+                  Placeholder="Search ML frameworks...">
+        <ItemTemplate Context="framework">
+            <div class="py-1">
+                <div class="fw-bold">@framework.Name</div>
+                <small class="text-muted">@framework.Language • @framework.Specialty</small>
+            </div>
+        </ItemTemplate>
+    </AutoComplete>
+
+    @if (selectedFramework != null)
+    {
+        <div class="alert alert-warning mt-3">
+            <strong>@selectedFramework.Name</strong><br />
+            Language: @selectedFramework.Language<br />
+            Specialty: @selectedFramework.Specialty
+        </div>
+    }
+</div>
+
+<hr class="my-4" />
+
+<div class="playground-section">
+    <h2>AI Prompt Templates</h2>
+    <p>Custom template showcase with min search length</p>
+
+    <AutoComplete TItem="PromptTemplate"
+                  Items="@promptTemplates"
+                  TextField="@(p => p.Title)"
+                  MinSearchLength="2"
+                  @bind-Value="@selectedPrompt"
+                  Placeholder="Search prompt templates (min 2 chars)...">
+        <ItemTemplate Context="prompt">
+            <div>
+                <div class="d-flex justify-content-between">
+                    <span class="fw-bold">@prompt.Title</span>
+                    <span class="badge bg-secondary">@prompt.Category</span>
+                </div>
+                <small class="text-muted d-block mt-1">@prompt.Template.Substring(0, Math.Min(60, prompt.Template.Length))...</small>
+            </div>
+        </ItemTemplate>
+    </AutoComplete>
+
+    @if (selectedPrompt != null)
+    {
+        <div class="alert alert-light mt-3 border">
+            <h5>@selectedPrompt.Title</h5>
+            <span class="badge bg-secondary mb-2">@selectedPrompt.Category</span>
+            <div class="bg-light p-3 rounded border">
+                <code style="white-space: pre-wrap;">@selectedPrompt.Template</code>
+            </div>
+        </div>
+    }
+</div>
+
+<hr class="my-4" />
+
+<div class="playground-section">
+    <h2>🤖 AI-Powered Semantic Search</h2>
+    <p>Search by meaning, not just text - powered by OpenAI embeddings</p>
+
+    <SemanticAutoComplete TItem="TechDoc"
+                          Items="@techDocs"
+                          SearchFields="@(d => new[] { d.Title, d.Description, d.Tags })"
+                          Value="@selectedDoc"
+                          ValueChanged="@(v => { selectedDoc = v; OnDocSelected(); })"
+                          SimilarityThreshold="0.15f"
+                          Placeholder="Type at least 3 characters: 'password security', 'async programming', 'mobile apps'...">
+        <ItemTemplate Context="doc">
+            <div>
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="fw-bold">@doc.Title</div>
+                        <small class="text-muted">@doc.Category • @doc.Tags</small>
+                        <div class="mt-1">
+                            <small class="text-secondary">@doc.Description</small>
+                        </div>
+                    </div>
+                    <span class="badge bg-info ms-2">@doc.Difficulty</span>
+                </div>
+            </div>
+        </ItemTemplate>
+    </SemanticAutoComplete>
+
+    @if (selectedDoc != null)
+    {
+        <div class="alert alert-primary mt-3">
+            <h5>@selectedDoc.Title</h5>
+            <div class="mb-2">
+                <span class="badge bg-info me-1">@selectedDoc.Category</span>
+                <span class="badge bg-secondary me-1">@selectedDoc.Difficulty</span>
+                <span class="badge bg-success">@selectedDoc.Tags</span>
+            </div>
+            <p class="mb-0">@selectedDoc.Description</p>
+        </div>
+    }
+
+    <div class="mt-3 p-3 bg-light border rounded">
+        <small class="text-muted">
+            <strong>💡 How Semantic Search Works:</strong><br />
+            • Type at least 3 characters to search<br />
+            • "password security" → finds "Authentication Best Practices", "OAuth Implementation"<br />
+            • "mobile apps" → finds "React Native", "Flutter", "Progressive Web Apps"<br />
+            • "async programming" → finds "Async/Await Patterns", "Task Parallel Library"<br />
+            <br />
+            The component automatically handles caching, error handling, and disposal!
+        </small>
+    </div>
+</div>
+
+@code {
+    private List<AIModel> aiModels = new()
+    {
+        new AIModel { Name = "GPT-4", Provider = "OpenAI", Category = "Large Language Model", Parameters = "1.76T", Description = "Most capable GPT model for complex tasks" },
+        new AIModel { Name = "GPT-3.5 Turbo", Provider = "OpenAI", Category = "Large Language Model", Parameters = "175B", Description = "Fast and efficient for most tasks" },
+        new AIModel { Name = "Claude 3 Opus", Provider = "Anthropic", Category = "Large Language Model", Parameters = "Unknown", Description = "Top-tier reasoning and analysis" },
+        new AIModel { Name = "Claude 3 Sonnet", Provider = "Anthropic", Category = "Large Language Model", Parameters = "Unknown", Description = "Balanced performance and speed" },
+        new AIModel { Name = "Claude 3 Haiku", Provider = "Anthropic", Category = "Large Language Model", Parameters = "Unknown", Description = "Fast and cost-effective" },
+        new AIModel { Name = "Gemini Pro", Provider = "Google", Category = "Multimodal", Parameters = "Unknown", Description = "Advanced multimodal capabilities" },
+        new AIModel { Name = "Llama 3", Provider = "Meta", Category = "Large Language Model", Parameters = "70B", Description = "Open-source powerful model" },
+        new AIModel { Name = "Mistral Large", Provider = "Mistral AI", Category = "Large Language Model", Parameters = "Unknown", Description = "High-performance European model" },
+        new AIModel { Name = "DALL-E 3", Provider = "OpenAI", Category = "Image Generation", Parameters = "Unknown", Description = "Advanced text-to-image generation" },
+        new AIModel { Name = "Stable Diffusion XL", Provider = "Stability AI", Category = "Image Generation", Parameters = "3.5B", Description = "Open-source image generation" },
+    };
+
+    private List<ProgrammingTech> programmingTechs = new()
+    {
+        new ProgrammingTech { Name = "Python", Category = "Language", Icon = "🐍", UseCases = "AI/ML, Data Science, Web Development" },
+        new ProgrammingTech { Name = "JavaScript", Category = "Language", Icon = "📜", UseCases = "Web Development, Full-stack" },
+        new ProgrammingTech { Name = "TypeScript", Category = "Language", Icon = "📘", UseCases = "Type-safe JavaScript, Enterprise apps" },
+        new ProgrammingTech { Name = "C#", Category = "Language", Icon = "♯", UseCases = "Enterprise, .NET, Games" },
+        new ProgrammingTech { Name = "Java", Category = "Language", Icon = "☕", UseCases = "Enterprise, Android, Backend" },
+        new ProgrammingTech { Name = "Go", Category = "Language", Icon = "🔷", UseCases = "Cloud, Microservices, DevOps" },
+        new ProgrammingTech { Name = "Rust", Category = "Language", Icon = "🦀", UseCases = "Systems, Performance, Safety" },
+        new ProgrammingTech { Name = "PyTorch", Category = "Framework", Icon = "🔥", UseCases = "Deep Learning, Research" },
+        new ProgrammingTech { Name = "TensorFlow", Category = "Framework", Icon = "🧮", UseCases = "Machine Learning, Production AI" },
+        new ProgrammingTech { Name = "React", Category = "Framework", Icon = "⚛️", UseCases = "UI Development, SPA" },
+        new ProgrammingTech { Name = "Angular", Category = "Framework", Icon = "🅰️", UseCases = "Enterprise Web Apps" },
+        new ProgrammingTech { Name = "Vue.js", Category = "Framework", Icon = "💚", UseCases = "Progressive Web Apps" },
+        new ProgrammingTech { Name = "Blazor", Category = "Framework", Icon = "🔥", UseCases = ".NET Web Apps, WebAssembly" },
+        new ProgrammingTech { Name = "Django", Category = "Framework", Icon = "🎸", UseCases = "Python Web Framework" },
+        new ProgrammingTech { Name = "FastAPI", Category = "Framework", Icon = "⚡", UseCases = "Modern Python APIs" },
+    };
+
+    private List<AITool> aiTools = new()
+    {
+        new AITool { Name = "ChatGPT", Type = "Conversational AI", PricingModel = "Freemium", Description = "AI-powered chatbot for various tasks" },
+        new AITool { Name = "GitHub Copilot", Type = "Code Assistant", PricingModel = "Subscription", Description = "AI pair programmer" },
+        new AITool { Name = "Midjourney", Type = "Image Generation", PricingModel = "Subscription", Description = "AI art generation platform" },
+        new AITool { Name = "Runway ML", Type = "Video & Image", PricingModel = "Freemium", Description = "AI-powered creative tools" },
+        new AITool { Name = "Hugging Face", Type = "ML Platform", PricingModel = "Freemium", Description = "ML model hub and deployment" },
+        new AITool { Name = "Weights & Biases", Type = "MLOps", PricingModel = "Freemium", Description = "ML experiment tracking" },
+        new AITool { Name = "LangChain", Type = "Framework", PricingModel = "Open Source", Description = "Build LLM applications" },
+        new AITool { Name = "Pinecone", Type = "Vector Database", PricingModel = "Freemium", Description = "Vector search for AI apps" },
+        new AITool { Name = "Replicate", Type = "ML Deployment", PricingModel = "Pay-per-use", Description = "Run ML models in the cloud" },
+        new AITool { Name = "Gradio", Type = "ML Interface", PricingModel = "Open Source", Description = "Build ML web interfaces" },
+    };
+
+    private List<MLFramework> mlFrameworks = new();
+
+    private List<PromptTemplate> promptTemplates = new()
+    {
+        new PromptTemplate
+        {
+            Title = "Code Review",
+            Category = "Development",
+            Template = "Review the following code for:\n1. Best practices\n2. Security issues\n3. Performance improvements\n4. Code style\n\nCode:\n{code}"
+        },
+        new PromptTemplate
+        {
+            Title = "Bug Fix",
+            Category = "Development",
+            Template = "I'm encountering the following error:\n{error}\n\nIn this code:\n{code}\n\nCan you help me fix it?"
+        },
+        new PromptTemplate
+        {
+            Title = "Documentation Generator",
+            Category = "Development",
+            Template = "Generate comprehensive documentation for the following code:\n{code}\n\nInclude:\n- Purpose\n- Parameters\n- Return values\n- Usage examples"
+        },
+        new PromptTemplate
+        {
+            Title = "Test Case Generator",
+            Category = "Testing",
+            Template = "Generate unit tests for the following function:\n{code}\n\nInclude:\n- Happy path tests\n- Edge cases\n- Error scenarios"
+        },
+        new PromptTemplate
+        {
+            Title = "SQL Query Optimizer",
+            Category = "Database",
+            Template = "Optimize the following SQL query:\n{query}\n\nConsider:\n- Index usage\n- Join optimization\n- Query performance"
+        },
+        new PromptTemplate
+        {
+            Title = "API Design Review",
+            Category = "Architecture",
+            Template = "Review this API design:\n{api_spec}\n\nEvaluate:\n- RESTful principles\n- Endpoint naming\n- HTTP methods\n- Response formats"
+        },
+        new PromptTemplate
+        {
+            Title = "Refactoring Suggestion",
+            Category = "Development",
+            Template = "Suggest refactoring for this code to improve:\n- Readability\n- Maintainability\n- Performance\n\nCode:\n{code}"
+        },
+    };
+
+    private AIModel? selectedModel;
+    private ProgrammingTech? selectedTech;
+    private AITool? selectedTool;
+    private MLFramework? selectedFramework;
+    private PromptTemplate? selectedPrompt;
+
+    // Semantic search
+    private TechDoc? selectedDoc;
+
+    private void OnDocSelected()
+    {
+        // Trigger UI refresh
+        StateHasChanged();
+    }
+
+    private List<TechDoc> techDocs = new()
+    {
+        new TechDoc { Title = "Authentication Best Practices", Category = "Security", Difficulty = "Intermediate", Tags = "OAuth, JWT, Sessions", Description = "Learn how to implement secure user authentication with modern standards" },
+        new TechDoc { Title = "OAuth 2.0 Implementation Guide", Category = "Security", Difficulty = "Advanced", Tags = "OAuth, API Security", Description = "Complete guide to implementing OAuth 2.0 authentication flows" },
+        new TechDoc { Title = "Password Hashing with Argon2", Category = "Security", Difficulty = "Intermediate", Tags = "Cryptography, Passwords", Description = "Best practices for securely storing user passwords" },
+        new TechDoc { Title = "Async/Await Patterns in C#", Category = "Programming", Difficulty = "Intermediate", Tags = "Async, Performance", Description = "Master asynchronous programming in .NET applications" },
+        new TechDoc { Title = "Task Parallel Library Guide", Category = "Programming", Difficulty = "Advanced", Tags = "Async, Concurrency", Description = "Advanced parallel programming techniques in .NET" },
+        new TechDoc { Title = "React Native Mobile Development", Category = "Mobile", Difficulty = "Intermediate", Tags = "React, iOS, Android", Description = "Build cross-platform mobile apps with JavaScript" },
+        new TechDoc { Title = "Flutter for Beginners", Category = "Mobile", Difficulty = "Beginner", Tags = "Flutter, Dart, Mobile", Description = "Getting started with Google's UI toolkit for mobile" },
+        new TechDoc { Title = "Progressive Web Apps Tutorial", Category = "Mobile", Difficulty = "Intermediate", Tags = "PWA, Web, Mobile", Description = "Build app-like experiences on the web" },
+        new TechDoc { Title = "Docker Containerization", Category = "DevOps", Difficulty = "Intermediate", Tags = "Docker, Containers", Description = "Package applications with Docker containers" },
+        new TechDoc { Title = "Kubernetes Orchestration", Category = "DevOps", Difficulty = "Advanced", Tags = "K8s, Orchestration", Description = "Manage containerized applications at scale" },
+        new TechDoc { Title = "SQL Query Optimization", Category = "Database", Difficulty = "Advanced", Tags = "SQL, Performance", Description = "Improve database query performance" },
+        new TechDoc { Title = "Redis Caching Strategies", Category = "Database", Difficulty = "Intermediate", Tags = "Cache, Performance", Description = "Implement high-performance caching with Redis" },
+        new TechDoc { Title = "API Design Principles", Category = "Architecture", Difficulty = "Intermediate", Tags = "REST, API Design", Description = "Design clean and maintainable RESTful APIs" },
+        new TechDoc { Title = "Microservices Architecture", Category = "Architecture", Difficulty = "Advanced", Tags = "Microservices, Design", Description = "Build scalable distributed systems" },
+        new TechDoc { Title = "GraphQL API Development", Category = "Architecture", Difficulty = "Intermediate", Tags = "GraphQL, API", Description = "Modern API development with GraphQL" },
+        new TechDoc { Title = "Machine Learning Fundamentals", Category = "AI/ML", Difficulty = "Beginner", Tags = "ML, Python", Description = "Introduction to machine learning concepts" },
+        new TechDoc { Title = "Neural Networks with PyTorch", Category = "AI/ML", Difficulty = "Advanced", Tags = "Deep Learning, PyTorch", Description = "Build deep learning models with PyTorch" },
+        new TechDoc { Title = "CSS Grid Layout", Category = "Frontend", Difficulty = "Beginner", Tags = "CSS, Layout", Description = "Modern CSS layout techniques" },
+        new TechDoc { Title = "TypeScript Best Practices", Category = "Frontend", Difficulty = "Intermediate", Tags = "TypeScript, JavaScript", Description = "Write type-safe JavaScript code" },
+        new TechDoc { Title = "Git Workflow Strategies", Category = "DevOps", Difficulty = "Beginner", Tags = "Git, Version Control", Description = "Effective team collaboration with Git" },
+    };
+
+    protected override void OnInitialized()
+    {
+        // Generate ML frameworks dataset
+        var languages = new[] { "Python", "R", "JavaScript", "C++", "Java", "Julia", "Scala" };
+        var specialties = new[] { "Deep Learning", "Computer Vision", "NLP", "Reinforcement Learning", "Time Series", "Tabular Data" };
+        var frameworks = new[]
+        {
+            "PyTorch", "TensorFlow", "Keras", "Scikit-learn", "XGBoost", "LightGBM", "CatBoost",
+            "FastAI", "Hugging Face Transformers", "spaCy", "NLTK", "OpenCV", "Detectron2",
+            "Stable Baselines", "Ray", "MLflow", "Kubeflow", "TFX", "Apache Spark MLlib"
+        };
+
+        for (int i = 0; i < frameworks.Length; i++)
+        {
+            mlFrameworks.Add(new MLFramework
+            {
+                Name = frameworks[i],
+                Language = languages[i % languages.Length],
+                Specialty = specialties[i % specialties.Length]
+            });
+        }
+
+        // Add more synthetic data
+        for (int i = frameworks.Length; i < 100; i++)
+        {
+            mlFrameworks.Add(new MLFramework
+            {
+                Name = $"ML Framework {i + 1}",
+                Language = languages[i % languages.Length],
+                Specialty = specialties[i % specialties.Length]
+            });
+        }
+    }
+
+    public class AIModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Provider { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public string Parameters { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+    }
+
+    public class ProgrammingTech
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public string Icon { get; set; } = string.Empty;
+        public string UseCases { get; set; } = string.Empty;
+    }
+
+    public class AITool
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public string PricingModel { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+    }
+
+    public class MLFramework
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Language { get; set; } = string.Empty;
+        public string Specialty { get; set; } = string.Empty;
+    }
+
+    public class PromptTemplate
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public string Template { get; set; } = string.Empty;
+    }
+
+    public class TechDoc
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public string Difficulty { get; set; } = string.Empty;
+        public string Tags { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+    }
+}

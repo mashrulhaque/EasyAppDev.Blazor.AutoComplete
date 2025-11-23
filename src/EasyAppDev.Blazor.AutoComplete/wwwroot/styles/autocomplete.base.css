@@ -1,0 +1,588 @@
+/**
+ * AutoComplete Base Styles
+ *
+ * Contains structural and layout styles that are theme-independent.
+ * These styles define the component's box model, positioning, and
+ * core functionality (dropdown, virtualization, keyboard focus).
+ *
+ * Do not include colors, fonts, or theme-specific properties here.
+ * All design tokens (colors, spacing, typography) are defined as CSS
+ * custom properties and can be overridden by theme files.
+ */
+
+/* ===== CSS VARIABLE DECLARATIONS (defaults, overridden by themes) ===== */
+:root {
+    /* Colors - default neutral values */
+    --ebd-ac-primary: #3b82f6;
+    --ebd-ac-bg: #ffffff;
+    --ebd-ac-text: #1f2937;
+    --ebd-ac-text-secondary: #6b7280;
+    --ebd-ac-border: #d1d5db;
+    --ebd-ac-border-focus: var(--ebd-ac-primary);
+    --ebd-ac-hover: #f3f4f6;
+    --ebd-ac-selected: #eff6ff;
+    --ebd-ac-selected-text: var(--ebd-ac-primary);
+    --ebd-ac-disabled: #9ca3af;
+    --ebd-ac-error: #dc2626;
+    --ebd-ac-shadow: rgba(0, 0, 0, 0.1);
+
+    /* Spacing */
+    --ebd-ac-input-padding: 8px 32px 8px 12px;
+    --ebd-ac-item-padding: 8px 12px;
+    --ebd-ac-border-radius: 6px;
+    --ebd-ac-dropdown-gap: 4px;
+    --ebd-ac-dropdown-max-height: 300px;
+    --ebd-ac-list-padding: 4px 0;
+    --ebd-ac-group-padding: 8px 12px;
+    --ebd-ac-icon-size: 20px;
+
+    /* Typography */
+    --ebd-ac-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --ebd-ac-font-size: 14px;
+    --ebd-ac-line-height: 1.5;
+    --ebd-ac-font-weight: 400;
+    --ebd-ac-group-font-size: 12px;
+    --ebd-ac-letter-spacing: normal;
+
+    /* Effects */
+    --ebd-ac-focus-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    --ebd-ac-dropdown-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+    --ebd-ac-transition-duration: 0.2s;
+    --ebd-ac-transition-timing: ease;
+}
+
+/* ===== CONTAINER ===== */
+.ebd-ac-container {
+    position: relative;
+    width: 100%;
+    font-family: var(--ebd-ac-font-family);
+    font-size: var(--ebd-ac-font-size);
+}
+
+/* ===== INPUT WRAPPER ===== */
+.ebd-ac-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* ===== INPUT FIELD ===== */
+.ebd-ac-input {
+    width: 100%;
+    padding: var(--ebd-ac-input-padding);
+    border: 1px solid var(--ebd-ac-border);
+    border-radius: var(--ebd-ac-border-radius);
+    background-color: var(--ebd-ac-bg);
+    color: var(--ebd-ac-text);
+    font-size: var(--ebd-ac-font-size);
+    line-height: var(--ebd-ac-line-height);
+    transition: border-color var(--ebd-ac-transition-duration) var(--ebd-ac-transition-timing),
+                box-shadow var(--ebd-ac-transition-duration) var(--ebd-ac-transition-timing);
+    outline: none;
+}
+
+.ebd-ac-input:focus {
+    border-color: var(--ebd-ac-border-focus);
+    box-shadow: var(--ebd-ac-focus-shadow);
+}
+
+.ebd-ac-input:disabled {
+    background-color: var(--ebd-ac-hover);
+    color: var(--ebd-ac-disabled);
+    cursor: not-allowed;
+}
+
+.ebd-ac-input::placeholder {
+    color: var(--ebd-ac-disabled);
+}
+
+/* ===== CLEAR BUTTON ===== */
+.ebd-ac-clear-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--ebd-ac-disabled);
+    font-size: var(--ebd-ac-icon-size);
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--ebd-ac-icon-size);
+    height: var(--ebd-ac-icon-size);
+    transition: color var(--ebd-ac-transition-duration) var(--ebd-ac-transition-timing);
+}
+
+.ebd-ac-clear-btn:hover {
+    color: var(--ebd-ac-text);
+}
+
+/* ===== DROPDOWN ===== */
+.ebd-ac-dropdown {
+    position: absolute;
+    top: calc(100% + var(--ebd-ac-dropdown-gap));
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background-color: var(--ebd-ac-bg);
+    border: 1px solid var(--ebd-ac-border);
+    border-radius: var(--ebd-ac-border-radius);
+    box-shadow: var(--ebd-ac-dropdown-shadow);
+    max-height: var(--ebd-ac-dropdown-max-height);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* ===== LIST ===== */
+.ebd-ac-list {
+    list-style: none;
+    margin: 0;
+    padding: var(--ebd-ac-list-padding);
+}
+
+/* ===== ITEMS ===== */
+.ebd-ac-item {
+    padding: var(--ebd-ac-item-padding);
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    color: var(--ebd-ac-text);
+    border-left: 3px solid transparent;
+}
+
+.ebd-ac-item:hover {
+    background-color: var(--ebd-ac-hover);
+}
+
+.ebd-ac-item.selected {
+    background-color: var(--ebd-ac-selected);
+    color: var(--ebd-ac-selected-text);
+    font-weight: 500;
+}
+
+.ebd-ac-item.keyboard-selected {
+    background: var(--ebd-ac-hover);
+    border-left-color: var(--ebd-ac-primary);
+    font-weight: 500;
+}
+
+/* ===== NO RESULTS ===== */
+.ebd-ac-no-results {
+    padding: 16px 12px;
+    text-align: center;
+    color: var(--ebd-ac-disabled);
+    font-style: italic;
+}
+
+/* ===== GROUPING ===== */
+.ebd-ac-group {
+    margin-bottom: 4px;
+    list-style: none;
+}
+
+.ebd-ac-group:last-child {
+    margin-bottom: 0;
+}
+
+.ebd-ac-group-header {
+    padding: var(--ebd-ac-group-padding);
+    background-color: var(--ebd-ac-hover);
+    color: var(--ebd-ac-text);
+    font-weight: 600;
+    font-size: var(--ebd-ac-group-font-size);
+    text-transform: uppercase;
+    letter-spacing: var(--ebd-ac-letter-spacing);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--ebd-ac-border);
+}
+
+.ebd-ac-group-count {
+    font-weight: 400;
+    color: var(--ebd-ac-disabled);
+    font-size: 11px;
+}
+
+/* Items within groups should not have extra padding */
+.ebd-ac-group .ebd-ac-item:first-of-type {
+    margin-top: 0;
+}
+
+/* ===== LOADING & VIRTUALIZATION ===== */
+.ebd-ac-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--ebd-ac-hover);
+    opacity: 0.5;
+}
+
+.ebd-ac-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 12px;
+    color: var(--ebd-ac-disabled);
+    font-size: var(--ebd-ac-font-size);
+    gap: 12px;
+}
+
+.ebd-ac-spinner {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--ebd-ac-border);
+    border-top-color: var(--ebd-ac-border-focus);
+    border-radius: 50%;
+    animation: ebd-ac-spin 0.8s linear infinite;
+}
+
+@keyframes ebd-ac-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===== BUILT-IN DISPLAY MODES ===== */
+
+/* Title with Description */
+.ebd-ac-title-desc {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ebd-ac-title-desc .ebd-ac-title {
+    font-weight: 500;
+    color: var(--ebd-ac-text);
+}
+
+.ebd-ac-title-desc .ebd-ac-description {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--ebd-ac-text-secondary);
+}
+
+/* Title with Badge */
+.ebd-ac-title-badge {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.ebd-ac-title-badge .ebd-ac-title {
+    flex: 1;
+    font-weight: 500;
+    color: var(--ebd-ac-text);
+}
+
+.ebd-ac-title-badge .ebd-ac-badge {
+    flex-shrink: 0;
+}
+
+/* Title + Description + Badge */
+.ebd-ac-title-desc-badge {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.ebd-ac-title-desc-badge .ebd-ac-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ebd-ac-title-desc-badge .ebd-ac-title {
+    font-weight: 500;
+    color: var(--ebd-ac-text);
+}
+
+.ebd-ac-title-desc-badge .ebd-ac-description {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--ebd-ac-text-secondary);
+}
+
+.ebd-ac-title-desc-badge .ebd-ac-badge {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* Icon with Title */
+.ebd-ac-icon-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ebd-ac-icon-title .ebd-ac-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.ebd-ac-icon-title .ebd-ac-title {
+    flex: 1;
+    font-weight: 500;
+    color: var(--ebd-ac-text);
+}
+
+/* Icon + Title + Description */
+.ebd-ac-icon-title-desc {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.ebd-ac-icon-title-desc .ebd-ac-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.ebd-ac-icon-title-desc .ebd-ac-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ebd-ac-icon-title-desc .ebd-ac-title {
+    font-weight: 500;
+    color: var(--ebd-ac-text);
+}
+
+.ebd-ac-icon-title-desc .ebd-ac-description {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--ebd-ac-text-secondary);
+}
+
+/* Card Mode */
+.ebd-ac-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 4px 0;
+}
+
+.ebd-ac-card .ebd-ac-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.ebd-ac-card .ebd-ac-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ebd-ac-card .ebd-ac-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.ebd-ac-card .ebd-ac-title {
+    font-weight: 600;
+    color: var(--ebd-ac-text);
+}
+
+.ebd-ac-card .ebd-ac-badge {
+    flex-shrink: 0;
+}
+
+.ebd-ac-card .ebd-ac-subtitle {
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--ebd-ac-text-secondary);
+}
+
+.ebd-ac-card .ebd-ac-description {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--ebd-ac-text-secondary);
+}
+
+/* Common Badge Styles */
+.ebd-ac-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+/* ===== RTL SUPPORT ===== */
+.ebd-ac-container[dir="rtl"] .ebd-ac-input {
+    padding: 8px 12px 8px 32px;
+}
+
+.ebd-ac-container[dir="rtl"] .ebd-ac-clear-btn {
+    right: auto;
+    left: 8px;
+}
+
+/* ===== SCROLLBAR STYLING ===== */
+.ebd-ac-dropdown::-webkit-scrollbar {
+    width: 8px;
+}
+
+.ebd-ac-dropdown::-webkit-scrollbar-track {
+    background: var(--ebd-ac-bg);
+}
+
+.ebd-ac-dropdown::-webkit-scrollbar-thumb {
+    background: var(--ebd-ac-border);
+    border-radius: 4px;
+}
+
+.ebd-ac-dropdown::-webkit-scrollbar-thumb:hover {
+    background: var(--ebd-ac-disabled);
+}
+
+/* ===== SIZE VARIANTS ===== */
+
+/* Default size (base values, can be overridden) */
+.ebd-ac-size-default {
+    --ebd-ac-input-padding: 8px 32px 8px 12px;
+    --ebd-ac-item-padding: 8px 12px;
+    --ebd-ac-font-size: 14px;
+    --ebd-ac-icon-size: 20px;
+    --ebd-ac-border-radius: 6px;
+}
+
+/* Compact size (25% reduced spacing) */
+.ebd-ac-size-compact {
+    --ebd-ac-input-padding: 4px 24px 4px 8px;
+    --ebd-ac-item-padding: 4px 8px;
+    --ebd-ac-font-size: 13px;
+    --ebd-ac-icon-size: 16px;
+    --ebd-ac-border-radius: 3px;
+    --ebd-ac-dropdown-gap: 2px;
+    --ebd-ac-list-padding: 2px 0;
+    --ebd-ac-group-padding: 4px 8px;
+}
+
+/* Large size (25% increased spacing) */
+.ebd-ac-size-large {
+    --ebd-ac-input-padding: 12px 40px 12px 16px;
+    --ebd-ac-item-padding: 12px 16px;
+    --ebd-ac-font-size: 16px;
+    --ebd-ac-icon-size: 24px;
+    --ebd-ac-border-radius: 8px;
+    --ebd-ac-dropdown-gap: 6px;
+    --ebd-ac-list-padding: 6px 0;
+    --ebd-ac-group-padding: 12px 16px;
+}
+
+/* ===== THEME TRANSITIONS ===== */
+
+/* Smooth transitions when theme changes */
+.ebd-ac-theme-transitions,
+.ebd-ac-theme-transitions * {
+    transition:
+        background-color var(--ebd-ac-transition-duration, 0.2s) var(--ebd-ac-transition-timing, ease),
+        color var(--ebd-ac-transition-duration, 0.2s) var(--ebd-ac-transition-timing, ease),
+        border-color var(--ebd-ac-transition-duration, 0.2s) var(--ebd-ac-transition-timing, ease),
+        box-shadow var(--ebd-ac-transition-duration, 0.2s) var(--ebd-ac-transition-timing, ease);
+}
+
+/* ===== ACCESSIBILITY ===== */
+
+/* Screen reader only - visually hidden but accessible to screen readers */
+.sr-only,
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border-width: 0 !important;
+}
+
+/* Focus visible - show prominent focus ring only for keyboard navigation */
+.ebd-ac-input:focus-visible {
+    outline: 2px solid var(--ebd-ac-primary);
+    outline-offset: 2px;
+}
+
+.ebd-ac-input:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Invalid state styling */
+.ebd-ac-invalid .ebd-ac-input,
+.ebd-ac-input.ebd-ac-invalid {
+    border-color: var(--ebd-ac-error) !important;
+    background-color: rgba(220, 38, 38, 0.05);
+}
+
+.ebd-ac-invalid .ebd-ac-input:focus,
+.ebd-ac-input.ebd-ac-invalid:focus {
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.ebd-ac-error-messages {
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--ebd-ac-error);
+}
+
+.ebd-ac-error-message {
+    display: block;
+    margin-top: 0.25rem;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .ebd-ac-input {
+        border-width: 2px;
+    }
+
+    .ebd-ac-item.keyboard-selected {
+        font-weight: 600;
+    }
+
+    .ebd-ac-invalid .ebd-ac-input,
+    .ebd-ac-input.ebd-ac-invalid {
+        border-width: 3px;
+    }
+}
+
+/* Reduced motion support - disables transitions */
+@media (prefers-reduced-motion: reduce) {
+    .ebd-ac-input,
+    .ebd-ac-clear-btn,
+    .ebd-ac-item,
+    .ebd-ac-spinner,
+    .ebd-ac-theme-transitions,
+    .ebd-ac-theme-transitions * {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+/* Firefox scrollbar styling */
+.ebd-ac-dropdown {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ebd-ac-border) var(--ebd-ac-bg);
+}
