@@ -7,6 +7,8 @@ A high-performance, feature-rich AutoComplete component for Blazor applications 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub](https://img.shields.io/github/stars/mashrulhaque/EasyAppDev.Blazor.AutoComplete?style=social)](https://github.com/mashrulhaque/EasyAppDev.Blazor.AutoComplete)
 
+**[🚀 Live Demo](https://blazorautocomplete.easyappdev.com/)** | [Documentation](#quick-start) | [NuGet](https://www.nuget.org/packages/EasyAppDev.Blazor.AutoComplete/)
+
 ## Features
 
 - **High Performance**: Virtualization support for 100K+ items, < 100ms filter response time
