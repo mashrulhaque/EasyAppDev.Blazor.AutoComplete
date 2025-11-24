@@ -83,7 +83,6 @@ CLAUDE.*
 claude-artifacts/
 *.artifact.json
 appsettings.json
-
 claude_workspace/
 .claude-workspace/
 

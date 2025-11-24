@@ -24,8 +24,8 @@
     <PackageTags>blazor;autocomplete;component;ai;semantic-search;performance;trimming;aot;wcag;accessibility;theming;virtualization</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>1.0.0</Version>
-    <PackageReleaseNotes>Version 1.0.0 - First stable release with core AutoComplete functionality, AI semantic search, 4 theme presets, 7 display modes, and full AOT compatibility.</PackageReleaseNotes>
+    <Version>1.0.1</Version>
+    <PackageReleaseNotes>Version 1.0.1 - Maintenance release with bug fixes and improvements.</PackageReleaseNotes>
     <Copyright>Copyright (c) 2025 EasyAppDev</Copyright>
 
     <!-- Documentation -->

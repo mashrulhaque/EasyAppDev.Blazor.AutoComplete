@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\EasyAppDev.Blazor.AutoComplete\EasyAppDev.Blazor.AutoComplete.csproj" />
+    <ProjectReference Include="..\..\src\EasyAppDev.Blazor.AutoComplete.AI\EasyAppDev.Blazor.AutoComplete.AI.csproj" />
   </ItemGroup>
 
 </Project>

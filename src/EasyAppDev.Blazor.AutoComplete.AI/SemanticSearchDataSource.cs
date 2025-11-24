@@ -1,7 +1,9 @@
 using EasyAppDev.Blazor.AutoComplete.DataSources;
+using EasyAppDev.Blazor.AutoComplete.AI.RateLimiting;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using System.Numerics.Tensors;
+using System.Text.RegularExpressions;
 
 namespace EasyAppDev.Blazor.AutoComplete.AI;
 
@@ -19,8 +21,10 @@ public class SemanticSearchDataSource<TItem> : IAutoCompleteDataSource<TItem> wh
     private readonly EmbeddingCache<string> _queryCache;
     private readonly float _minSimilarityScore;
     private readonly int? _maxResults;
+    private readonly int _maxEmbeddingTextLength;
     private readonly ILogger? _logger;
     private readonly HybridSearchOptions _hybridOptions;
+    private readonly RateLimiter? _rateLimiter;
     private string? _lastError;
     private readonly Dictionary<TItem, float> _lastSearchScores = new();
     private readonly SemaphoreSlim _cleanupLock = new(1, 1);
@@ -48,8 +52,10 @@ public class SemanticSearchDataSource<TItem> : IAutoCompleteDataSource<TItem> wh
     /// <param name="queryCacheDuration">Duration to cache query embeddings. Default is 15 minutes.</param>
     /// <param name="maxItemCacheSize">Maximum number of item embeddings to cache. Default is 10,000. Use -1 for unlimited.</param>
     /// <param name="maxQueryCacheSize">Maximum number of query embeddings to cache. Default is 1,000. Use -1 for unlimited.</param>
+    /// <param name="maxEmbeddingTextLength">Maximum length of text sent to embedding API. Default is 8000 characters. Must be between 100 and 32000.</param>
     /// <param name="preWarmCache">If true, generates embeddings for all items at initialization. Default is false.</param>
     /// <param name="hybridOptions">Options for hybrid search (combining semantic + text matching). If null, uses defaults.</param>
+    /// <param name="rateLimitPerMinute">Maximum embedding API calls per minute. If null, no rate limiting is applied. Recommended: 60 for single-user, 10-30 for multi-user apps.</param>
     /// <param name="logger">Optional logger for diagnostic information.</param>
     public SemanticSearchDataSource(
         IEnumerable<TItem> items,
@@ -61,8 +67,10 @@ public class SemanticSearchDataSource<TItem> : IAutoCompleteDataSource<TItem> wh
         TimeSpan? queryCacheDuration = null,
         int maxItemCacheSize = 10_000,
         int maxQueryCacheSize = 1_000,
+        int maxEmbeddingTextLength = 8000,
         bool preWarmCache = false,
         HybridSearchOptions? hybridOptions = null,
+        int? rateLimitPerMinute = null,
         ILogger? logger = null)
     {
         ArgumentNullException.ThrowIfNull(items);
@@ -83,13 +91,37 @@ public class SemanticSearchDataSource<TItem> : IAutoCompleteDataSource<TItem> wh
                 "Max results must be greater than 0.");
         }
 
+        if (maxEmbeddingTextLength is < 100 or > 32000)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(maxEmbeddingTextLength),
+                "Must be between 100 and 32000 characters. OpenAI text-embedding-3-small supports up to 8191 tokens (~32K chars).");
+        }
+
         _items = items;
         _embeddingGenerator = embeddingGenerator;
         _textSelector = textSelector;
         _minSimilarityScore = similarityThreshold;
         _maxResults = maxResults;
+        _maxEmbeddingTextLength = maxEmbeddingTextLength;
         _logger = logger;
         _hybridOptions = hybridOptions ?? new HybridSearchOptions();
+
+        // Initialize rate limiter if configured
+        if (rateLimitPerMinute.HasValue)
+        {
+            if (rateLimitPerMinute.Value <= 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(rateLimitPerMinute),
+                    "Must be greater than 0 or null to disable rate limiting");
+            }
+
+            _rateLimiter = new RateLimiter(rateLimitPerMinute.Value);
+            _logger?.LogInformation(
+                "[SECURITY] Rate limiting enabled: {MaxRequests} requests per minute",
+                rateLimitPerMinute.Value);
+        }
 
         // Initialize caches with LRU eviction
         _itemCache = new EmbeddingCache<TItem>(
@@ -179,8 +211,12 @@ public class SemanticSearchDataSource<TItem> : IAutoCompleteDataSource<TItem> wh
                             item,
                             async () =>
                             {
+                                // SECURITY: Sanitize item text before sending to API
+                                var itemText = _textSelector(item);
+                                var sanitizedItemText = SanitizeEmbeddingInput(itemText, $"item-{processedCount}");
+
                                 var result = await _embeddingGenerator.GenerateAsync(
-                                    [_textSelector(item)],
+                                    [sanitizedItemText],
                                     cancellationToken: ct);
                                 return result[0];
                             },
@@ -216,6 +252,69 @@ public class SemanticSearchDataSource<TItem> : IAutoCompleteDataSource<TItem> wh
     }
 
     /// <summary>
+    /// Sanitizes text before sending to embedding API to prevent prompt injection and excessive costs.
+    /// Removes control characters and truncates to maximum length.
+    /// </summary>
+    /// <param name="input">The text to sanitize.</param>
+    /// <param name="context">Context for logging (e.g., "query", "item-0").</param>
+    /// <returns>Sanitized text safe for embedding generation.</returns>
+    private string SanitizeEmbeddingInput(string input, string context)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return string.Empty;
+        }
+
+        // Remove null characters and control characters (except whitespace)
+        // This prevents prompt injection attacks and malformed API requests
+        var sanitized = new string(input
+            .Where(c => c != '\0' && (char.IsWhiteSpace(c) || !char.IsControl(c)))
+            .ToArray());
+
+        // Truncate to max length to prevent excessive API costs and timeouts
+        if (sanitized.Length > _maxEmbeddingTextLength)
+        {
+            _logger?.LogWarning(
+                "[SECURITY] Embedding input for {Context} truncated from {Original} to {Max} characters",
+                context,
+                sanitized.Length,
+                _maxEmbeddingTextLength);
+
+            sanitized = sanitized.Substring(0, _maxEmbeddingTextLength);
+        }
+
+        return sanitized;
+    }
+
+    /// <summary>
+    /// Sanitizes error messages to prevent exposure of API keys and sensitive data.
+    /// </summary>
+    /// <param name="message">The error message to sanitize.</param>
+    /// <returns>Sanitized error message safe for display to users.</returns>
+    private string SanitizeErrorMessage(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return "Unknown error occurred";
+        }
+
+        var sanitized = message;
+
+        // Remove potential API keys (patterns like sk-xxx, Bearer xxx, api_key: xxx)
+        sanitized = Regex.Replace(sanitized, @"sk-[a-zA-Z0-9]{20,}", "sk-***", RegexOptions.IgnoreCase);
+        sanitized = Regex.Replace(sanitized, @"Bearer\s+[a-zA-Z0-9\-._~+/]+=*", "Bearer ***", RegexOptions.IgnoreCase);
+        sanitized = Regex.Replace(sanitized, @"api[_-]?key[:\s]+[a-zA-Z0-9\-_]+", "api_key: ***", RegexOptions.IgnoreCase);
+
+        // Truncate if too long
+        if (sanitized.Length > 200)
+        {
+            sanitized = sanitized.Substring(0, 200) + "...";
+        }
+
+        return sanitized;
+    }
+
+    /// <summary>
     /// Searches for items semantically similar to the search text.
     /// Uses SIMD-accelerated cosine similarity and intelligent caching for optimal performance.
     /// </summary>
@@ -235,22 +334,54 @@ public class SemanticSearchDataSource<TItem> : IAutoCompleteDataSource<TItem> wh
             // Periodic cache cleanup (every 5 minutes)
             await PerformPeriodicCleanupAsync();
 
+            // SECURITY: Sanitize search text before sending to API
+            var sanitizedSearchText = SanitizeEmbeddingInput(searchText, "query");
+
+            // SECURITY: Check rate limit before API call
+            if (_rateLimiter != null)
+            {
+                if (!await _rateLimiter.TryAcquireAsync(cancellationToken))
+                {
+                    _logger?.LogWarning(
+                        "[SECURITY] Rate limit exceeded for query. " +
+                        "Available tokens: {Tokens}, Next refill: {NextRefill:yyyy-MM-dd HH:mm:ss}",
+                        _rateLimiter.AvailableTokens,
+                        _rateLimiter.GetNextRefillTime());
+
+                    var waitTime = _rateLimiter.GetNextRefillTime() - DateTime.UtcNow;
+                    var waitMessage = waitTime.TotalSeconds < 60
+                        ? $"{(int)waitTime.TotalSeconds} seconds"
+                        : $"{(int)waitTime.TotalMinutes} minute(s)";
+
+                    _lastError = $"Rate limit exceeded. Please wait {waitMessage} before searching again.";
+                    ErrorOccurred?.Invoke(this, _lastError);
+                    return Enumerable.Empty<TItem>();
+                }
+            }
+
             // Generate embedding for search query (with caching for repeated searches)
             Embedding<float> queryEmbedding;
             try
             {
                 queryEmbedding = await _queryCache.GetOrCreateAsync(
-                    searchText,
+                    sanitizedSearchText,
                     async () =>
                     {
                         var result = await _embeddingGenerator.GenerateAsync(
-                            [searchText],
+                            [sanitizedSearchText],
                             cancellationToken: cancellationToken);
                         return result[0];
                     },
                     cancellationToken);
 
                 _lastError = null; // Clear any previous errors on success
+            }
+            catch (RateLimitExceededException ex)
+            {
+                _logger?.LogError(ex, "[SECURITY] Hard rate limit exceeded");
+                _lastError = "Too many requests. Please try again later.";
+                ErrorOccurred?.Invoke(this, _lastError);
+                return Enumerable.Empty<TItem>();
             }
             catch (OperationCanceledException)
             {
@@ -260,9 +391,17 @@ public class SemanticSearchDataSource<TItem> : IAutoCompleteDataSource<TItem> wh
             }
             catch (Exception ex)
             {
-                var errorMessage = ex.InnerException?.Message ?? ex.Message;
-                _lastError = $"Failed to generate embedding: {errorMessage}";
-                _logger?.LogError(ex, "Failed to generate embedding for search text: {SearchText}", searchText);
+                // SECURITY: Sanitize error message to prevent API key exposure
+                var sanitizedError = SanitizeErrorMessage(ex.InnerException?.Message ?? ex.Message);
+                _lastError = $"Failed to generate embedding: {sanitizedError}";
+
+                // Log full details for admin (not exposed to user)
+                _logger?.LogError(
+                    ex,
+                    "[SECURITY] Embedding generation failed for search text length: {Length}. First 50 chars: {Preview}",
+                    searchText.Length,
+                    searchText.Length > 50 ? searchText.Substring(0, 50) : searchText);
+
                 ErrorOccurred?.Invoke(this, _lastError);
                 return Enumerable.Empty<TItem>();
             }
@@ -286,8 +425,12 @@ public class SemanticSearchDataSource<TItem> : IAutoCompleteDataSource<TItem> wh
                         {
                             try
                             {
+                                // SECURITY: Sanitize item text before sending to API
+                                var itemText = _textSelector(item);
+                                var sanitizedItemText = SanitizeEmbeddingInput(itemText, "item");
+
                                 var result = await _embeddingGenerator.GenerateAsync(
-                                    [_textSelector(item)],
+                                    [sanitizedItemText],
                                     cancellationToken: cancellationToken);
                                 return result[0];
                             }
