@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  autocomplete-playground:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autocomplete-playground
+    ports:
+      - "8080:8080"
+    environment:
+      # ASP.NET Core Configuration
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+
+      # OpenAI Configuration (CHANGE THESE VALUES)
+      # For security, use .env file or pass via command line
+      - OpenAI__ApiKey=${OPENAI_API_KEY:-your-api-key-here}
+      - OpenAI__Model=${OPENAI_MODEL:-text-embedding-3-small}
+
+      # Logging
+      - Logging__LogLevel__Default=Information
+      - Logging__LogLevel__Microsoft.AspNetCore=Warning
+
+      # Optional: Configure allowed hosts
+      - AllowedHosts=*
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    # Resource limits (adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  default:
+    name: autocomplete-network
