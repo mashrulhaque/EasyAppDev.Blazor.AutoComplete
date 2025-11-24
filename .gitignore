@@ -82,6 +82,7 @@ _framework
 CLAUDE.*
 claude-artifacts/
 *.artifact.json
+appsettings.json
 
 claude_workspace/
 .claude-workspace/
@@ -105,3 +106,4 @@ publish-trimmed/
 .DS_Store
 Thumbs.db
 
+samples/AutoComplete.Playground/appsettings.json

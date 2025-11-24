@@ -509,10 +509,8 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
 
     #region Event Handlers
 
-    private async Task OnSearchTextChanged(ChangeEventArgs e)
+    private async Task OnSearchTextChangedAsync()
     {
-        _searchText = e.Value?.ToString() ?? string.Empty;
-
         if (_searchText.Length >= MinSearchLength)
         {
             if (_debounceTimer != null)
