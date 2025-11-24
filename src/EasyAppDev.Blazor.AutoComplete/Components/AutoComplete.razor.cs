@@ -224,6 +224,14 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     public int DebounceMs { get; set; } = 300;
 
     /// <summary>
+    /// Maximum allowed length for search text to prevent memory exhaustion attacks.
+    /// Default is 500 characters. Maximum allowed value is 2000.
+    /// Values exceeding this limit will be truncated.
+    /// </summary>
+    [Parameter]
+    public int MaxSearchLength { get; set; } = 500;
+
+    /// <summary>
     /// Whether to enable virtualization for large datasets.
     /// </summary>
     [Parameter]
@@ -511,6 +519,13 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
 
     private async Task OnSearchTextChangedAsync()
     {
+        // Security: Enforce maximum search length to prevent memory exhaustion
+        var effectiveMaxLength = GetEffectiveMaxSearchLength();
+        if (_searchText.Length > effectiveMaxLength)
+        {
+            _searchText = _searchText.Substring(0, effectiveMaxLength);
+        }
+
         if (_searchText.Length >= MinSearchLength)
         {
             if (_debounceTimer != null)
@@ -690,6 +705,15 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     #endregion
 
     #region Helper Methods
+
+    /// <summary>
+    /// Gets the effective maximum search length, enforcing a hard limit of 2000 characters.
+    /// </summary>
+    private int GetEffectiveMaxSearchLength()
+    {
+        const int AbsoluteMaxLength = 2000;
+        return Math.Min(MaxSearchLength, AbsoluteMaxLength);
+    }
 
     private async Task FilterItemsAsync()
     {

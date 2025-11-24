@@ -1,4 +1,5 @@
 using EasyAppDev.Blazor.AutoComplete.Options;
+using EasyAppDev.Blazor.AutoComplete.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,231 +35,277 @@ public class ThemeManager
 
         var props = new List<string>();
 
-        // Color properties
+        // Color properties (with security sanitization)
         if (options.Colors != null)
         {
             var colors = options.Colors;
 
-            if (colors.Primary != null)
+            var sanitizedPrimary = CssSanitizer.SanitizeColor(colors.Primary);
+            if (sanitizedPrimary != null)
             {
-                props.Add($"--ebd-ac-primary: {colors.Primary}");
+                props.Add($"--ebd-ac-primary: {sanitizedPrimary}");
             }
 
-            if (colors.Background != null)
+            var sanitizedBg = CssSanitizer.SanitizeColor(colors.Background);
+            if (sanitizedBg != null)
             {
-                props.Add($"--ebd-ac-bg: {colors.Background}");
+                props.Add($"--ebd-ac-bg: {sanitizedBg}");
             }
 
-            if (colors.Text != null)
+            var sanitizedText = CssSanitizer.SanitizeColor(colors.Text);
+            if (sanitizedText != null)
             {
-                props.Add($"--ebd-ac-text: {colors.Text}");
+                props.Add($"--ebd-ac-text: {sanitizedText}");
             }
 
-            if (colors.TextSecondary != null)
+            var sanitizedTextSecondary = CssSanitizer.SanitizeColor(colors.TextSecondary);
+            if (sanitizedTextSecondary != null)
             {
-                props.Add($"--ebd-ac-text-secondary: {colors.TextSecondary}");
+                props.Add($"--ebd-ac-text-secondary: {sanitizedTextSecondary}");
             }
 
-            if (colors.Border != null)
+            var sanitizedBorder = CssSanitizer.SanitizeColor(colors.Border);
+            if (sanitizedBorder != null)
             {
-                props.Add($"--ebd-ac-border: {colors.Border}");
+                props.Add($"--ebd-ac-border: {sanitizedBorder}");
             }
 
-            if (colors.BorderFocus != null)
+            var sanitizedBorderFocus = CssSanitizer.SanitizeColor(colors.BorderFocus);
+            if (sanitizedBorderFocus != null)
             {
-                props.Add($"--ebd-ac-border-focus: {colors.BorderFocus}");
+                props.Add($"--ebd-ac-border-focus: {sanitizedBorderFocus}");
             }
 
             // Auto-generate hover color from primary color if not explicitly set
-            if (colors.Hover != null)
+            var sanitizedHover = CssSanitizer.SanitizeColor(colors.Hover);
+            if (sanitizedHover != null)
             {
-                props.Add($"--ebd-ac-hover: {colors.Hover}");
+                props.Add($"--ebd-ac-hover: {sanitizedHover}");
             }
-            else if (colors.Primary != null)
+            else if (sanitizedPrimary != null)
             {
                 // Generate a very light tint of the primary color for hover (90% lighter)
-                var autoHoverColor = ColorHelper.Lighten(colors.Primary, 0.9);
-                props.Add($"--ebd-ac-hover: {autoHoverColor}");
+                var autoHoverColor = ColorHelper.Lighten(sanitizedPrimary, 0.9);
+                var sanitizedAutoHover = CssSanitizer.SanitizeColor(autoHoverColor);
+                if (sanitizedAutoHover != null)
+                {
+                    props.Add($"--ebd-ac-hover: {sanitizedAutoHover}");
+                }
             }
 
             // Auto-generate selected color from primary color if not explicitly set
-            if (colors.Selected != null)
+            var sanitizedSelected = CssSanitizer.SanitizeColor(colors.Selected);
+            if (sanitizedSelected != null)
             {
-                props.Add($"--ebd-ac-selected: {colors.Selected}");
+                props.Add($"--ebd-ac-selected: {sanitizedSelected}");
             }
-            else if (colors.Primary != null)
+            else if (sanitizedPrimary != null)
             {
                 // Generate a lighter tint of the primary color for selected state (85% lighter)
-                var autoSelectedColor = ColorHelper.Lighten(colors.Primary, 0.85);
-                props.Add($"--ebd-ac-selected: {autoSelectedColor}");
+                var autoSelectedColor = ColorHelper.Lighten(sanitizedPrimary, 0.85);
+                var sanitizedAutoSelected = CssSanitizer.SanitizeColor(autoSelectedColor);
+                if (sanitizedAutoSelected != null)
+                {
+                    props.Add($"--ebd-ac-selected: {sanitizedAutoSelected}");
+                }
             }
 
-            if (colors.SelectedText != null)
+            var sanitizedSelectedText = CssSanitizer.SanitizeColor(colors.SelectedText);
+            if (sanitizedSelectedText != null)
             {
-                props.Add($"--ebd-ac-selected-text: {colors.SelectedText}");
+                props.Add($"--ebd-ac-selected-text: {sanitizedSelectedText}");
             }
 
-            if (colors.Disabled != null)
+            var sanitizedDisabled = CssSanitizer.SanitizeColor(colors.Disabled);
+            if (sanitizedDisabled != null)
             {
-                props.Add($"--ebd-ac-disabled: {colors.Disabled}");
+                props.Add($"--ebd-ac-disabled: {sanitizedDisabled}");
             }
 
-            if (colors.Error != null)
+            var sanitizedError = CssSanitizer.SanitizeColor(colors.Error);
+            if (sanitizedError != null)
             {
-                props.Add($"--ebd-ac-error: {colors.Error}");
+                props.Add($"--ebd-ac-error: {sanitizedError}");
             }
 
-            if (colors.Shadow != null)
+            var sanitizedShadow = CssSanitizer.SanitizeColor(colors.Shadow);
+            if (sanitizedShadow != null)
             {
-                props.Add($"--ebd-ac-shadow: {colors.Shadow}");
+                props.Add($"--ebd-ac-shadow: {sanitizedShadow}");
             }
 
-            if (colors.DropdownBackground != null)
+            var sanitizedDropdownBg = CssSanitizer.SanitizeColor(colors.DropdownBackground);
+            if (sanitizedDropdownBg != null)
             {
-                props.Add($"--ebd-ac-dropdown-bg: {colors.DropdownBackground}");
+                props.Add($"--ebd-ac-dropdown-bg: {sanitizedDropdownBg}");
             }
 
-            if (colors.Focus != null)
+            var sanitizedFocus = CssSanitizer.SanitizeColor(colors.Focus);
+            if (sanitizedFocus != null)
             {
-                props.Add($"--ebd-ac-focus: {colors.Focus}");
+                props.Add($"--ebd-ac-focus: {sanitizedFocus}");
             }
 
-            if (colors.Placeholder != null)
+            var sanitizedPlaceholder = CssSanitizer.SanitizeColor(colors.Placeholder);
+            if (sanitizedPlaceholder != null)
             {
-                props.Add($"--ebd-ac-placeholder: {colors.Placeholder}");
+                props.Add($"--ebd-ac-placeholder: {sanitizedPlaceholder}");
             }
         }
 
-        // Spacing properties
+        // Spacing properties (with security sanitization)
         if (options.Spacing != null)
         {
             var spacing = options.Spacing;
 
-            if (spacing.InputPadding != null)
+            var sanitizedInputPadding = CssSanitizer.SanitizeLength(spacing.InputPadding);
+            if (sanitizedInputPadding != null)
             {
-                props.Add($"--ebd-ac-input-padding: {spacing.InputPadding}");
+                props.Add($"--ebd-ac-input-padding: {sanitizedInputPadding}");
             }
 
-            if (spacing.ItemPadding != null)
+            var sanitizedItemPadding = CssSanitizer.SanitizeLength(spacing.ItemPadding);
+            if (sanitizedItemPadding != null)
             {
-                props.Add($"--ebd-ac-item-padding: {spacing.ItemPadding}");
+                props.Add($"--ebd-ac-item-padding: {sanitizedItemPadding}");
             }
 
-            if (spacing.BorderRadius != null)
+            var sanitizedBorderRadius = CssSanitizer.SanitizeLength(spacing.BorderRadius);
+            if (sanitizedBorderRadius != null)
             {
-                props.Add($"--ebd-ac-border-radius: {spacing.BorderRadius}");
+                props.Add($"--ebd-ac-border-radius: {sanitizedBorderRadius}");
             }
 
-            if (spacing.DropdownGap != null)
+            var sanitizedDropdownGap = CssSanitizer.SanitizeLength(spacing.DropdownGap);
+            if (sanitizedDropdownGap != null)
             {
-                props.Add($"--ebd-ac-dropdown-gap: {spacing.DropdownGap}");
+                props.Add($"--ebd-ac-dropdown-gap: {sanitizedDropdownGap}");
             }
 
-            if (spacing.ItemGap != null)
+            var sanitizedItemGap = CssSanitizer.SanitizeLength(spacing.ItemGap);
+            if (sanitizedItemGap != null)
             {
-                props.Add($"--ebd-ac-item-gap: {spacing.ItemGap}");
+                props.Add($"--ebd-ac-item-gap: {sanitizedItemGap}");
             }
 
-            if (spacing.GroupHeaderPadding != null)
+            var sanitizedGroupPadding = CssSanitizer.SanitizeLength(spacing.GroupHeaderPadding);
+            if (sanitizedGroupPadding != null)
             {
-                props.Add($"--ebd-ac-group-padding: {spacing.GroupHeaderPadding}");
+                props.Add($"--ebd-ac-group-padding: {sanitizedGroupPadding}");
             }
 
-            if (spacing.MaxHeight != null)
+            var sanitizedMaxHeight = CssSanitizer.SanitizeLength(spacing.MaxHeight);
+            if (sanitizedMaxHeight != null)
             {
-                props.Add($"--ebd-ac-dropdown-max-height: {spacing.MaxHeight}");
+                props.Add($"--ebd-ac-dropdown-max-height: {sanitizedMaxHeight}");
             }
 
-            if (spacing.MinWidth != null)
+            var sanitizedMinWidth = CssSanitizer.SanitizeLength(spacing.MinWidth);
+            if (sanitizedMinWidth != null)
             {
-                props.Add($"--ebd-ac-min-width: {spacing.MinWidth}");
+                props.Add($"--ebd-ac-min-width: {sanitizedMinWidth}");
             }
 
-            if (spacing.ListPadding != null)
+            var sanitizedListPadding = CssSanitizer.SanitizeLength(spacing.ListPadding);
+            if (sanitizedListPadding != null)
             {
-                props.Add($"--ebd-ac-list-padding: {spacing.ListPadding}");
+                props.Add($"--ebd-ac-list-padding: {sanitizedListPadding}");
             }
 
-            if (spacing.IconSize != null)
+            var sanitizedIconSize = CssSanitizer.SanitizeLength(spacing.IconSize);
+            if (sanitizedIconSize != null)
             {
-                props.Add($"--ebd-ac-icon-size: {spacing.IconSize}");
+                props.Add($"--ebd-ac-icon-size: {sanitizedIconSize}");
             }
         }
 
-        // Typography properties
+        // Typography properties (with security sanitization)
         if (options.Typography != null)
         {
             var typography = options.Typography;
 
-            if (typography.FontFamily != null)
+            var sanitizedFontFamily = CssSanitizer.SanitizeFontFamily(typography.FontFamily);
+            if (sanitizedFontFamily != null)
             {
-                props.Add($"--ebd-ac-font-family: {typography.FontFamily}");
+                props.Add($"--ebd-ac-font-family: {sanitizedFontFamily}");
             }
 
-            if (typography.FontSize != null)
+            var sanitizedFontSize = CssSanitizer.SanitizeLength(typography.FontSize);
+            if (sanitizedFontSize != null)
             {
-                props.Add($"--ebd-ac-font-size: {typography.FontSize}");
+                props.Add($"--ebd-ac-font-size: {sanitizedFontSize}");
             }
 
-            if (typography.LineHeight != null)
+            var sanitizedLineHeight = CssSanitizer.SanitizeGenericValue(typography.LineHeight);
+            if (sanitizedLineHeight != null)
             {
-                props.Add($"--ebd-ac-line-height: {typography.LineHeight}");
+                props.Add($"--ebd-ac-line-height: {sanitizedLineHeight}");
             }
 
-            if (typography.FontWeight != null)
+            var sanitizedFontWeight = CssSanitizer.SanitizeGenericValue(typography.FontWeight);
+            if (sanitizedFontWeight != null)
             {
-                props.Add($"--ebd-ac-font-weight: {typography.FontWeight}");
+                props.Add($"--ebd-ac-font-weight: {sanitizedFontWeight}");
             }
 
-            if (typography.DescriptionFontSize != null)
+            var sanitizedDescFontSize = CssSanitizer.SanitizeLength(typography.DescriptionFontSize);
+            if (sanitizedDescFontSize != null)
             {
-                props.Add($"--ebd-ac-description-font-size: {typography.DescriptionFontSize}");
+                props.Add($"--ebd-ac-description-font-size: {sanitizedDescFontSize}");
             }
 
-            if (typography.BadgeFontSize != null)
+            var sanitizedBadgeFontSize = CssSanitizer.SanitizeLength(typography.BadgeFontSize);
+            if (sanitizedBadgeFontSize != null)
             {
-                props.Add($"--ebd-ac-badge-font-size: {typography.BadgeFontSize}");
+                props.Add($"--ebd-ac-badge-font-size: {sanitizedBadgeFontSize}");
             }
 
-            if (typography.GroupHeaderFontSize != null)
+            var sanitizedGroupFontSize = CssSanitizer.SanitizeLength(typography.GroupHeaderFontSize);
+            if (sanitizedGroupFontSize != null)
             {
-                props.Add($"--ebd-ac-group-font-size: {typography.GroupHeaderFontSize}");
+                props.Add($"--ebd-ac-group-font-size: {sanitizedGroupFontSize}");
             }
 
-            if (typography.LetterSpacing != null)
+            var sanitizedLetterSpacing = CssSanitizer.SanitizeLength(typography.LetterSpacing);
+            if (sanitizedLetterSpacing != null)
             {
-                props.Add($"--ebd-ac-letter-spacing: {typography.LetterSpacing}");
+                props.Add($"--ebd-ac-letter-spacing: {sanitizedLetterSpacing}");
             }
         }
 
-        // Effect properties
+        // Effect properties (with security sanitization)
         if (options.Effects != null)
         {
             var effects = options.Effects;
 
-            if (effects.FocusShadow != null)
+            var sanitizedFocusShadow = CssSanitizer.SanitizeShadow(effects.FocusShadow);
+            if (sanitizedFocusShadow != null)
             {
-                props.Add($"--ebd-ac-focus-shadow: {effects.FocusShadow}");
+                props.Add($"--ebd-ac-focus-shadow: {sanitizedFocusShadow}");
             }
 
-            if (effects.DropdownShadow != null)
+            var sanitizedDropdownShadow = CssSanitizer.SanitizeShadow(effects.DropdownShadow);
+            if (sanitizedDropdownShadow != null)
             {
-                props.Add($"--ebd-ac-dropdown-shadow: {effects.DropdownShadow}");
+                props.Add($"--ebd-ac-dropdown-shadow: {sanitizedDropdownShadow}");
             }
 
-            if (effects.TransitionDuration != null)
+            var sanitizedTransitionDuration = CssSanitizer.SanitizeTime(effects.TransitionDuration);
+            if (sanitizedTransitionDuration != null)
             {
-                props.Add($"--ebd-ac-transition-duration: {effects.TransitionDuration}");
+                props.Add($"--ebd-ac-transition-duration: {sanitizedTransitionDuration}");
             }
 
-            if (effects.BorderWidth != null)
+            var sanitizedBorderWidth = CssSanitizer.SanitizeLength(effects.BorderWidth);
+            if (sanitizedBorderWidth != null)
             {
-                props.Add($"--ebd-ac-border-width: {effects.BorderWidth}");
+                props.Add($"--ebd-ac-border-width: {sanitizedBorderWidth}");
             }
 
-            if (effects.TransitionTiming != null)
+            var sanitizedTransitionTiming = CssSanitizer.SanitizeGenericValue(effects.TransitionTiming);
+            if (sanitizedTransitionTiming != null)
             {
-                props.Add($"--ebd-ac-transition-timing: {effects.TransitionTiming}");
+                props.Add($"--ebd-ac-transition-timing: {sanitizedTransitionTiming}");
             }
         }
 

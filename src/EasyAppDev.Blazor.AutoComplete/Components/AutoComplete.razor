@@ -29,6 +29,7 @@
                id="@_inputIdValue"
                class="ebd-ac-input"
                placeholder="@Placeholder"
+               maxlength="@GetEffectiveMaxSearchLength()"
                @bind-value="_searchText"
                @bind-value:event="oninput"
                @bind-value:after="OnSearchTextChangedAsync"

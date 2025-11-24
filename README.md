@@ -1031,6 +1031,66 @@ Three source generators ensure AOT compatibility and developer productivity:
 2. **ExpressionValidatorGenerator** - Build-time expression validation with diagnostics
 3. **ConfigurationApplierGenerator** - Auto-generates configuration application (100% coverage)
 
+## Security
+
+This component implements multiple security layers to protect against common web vulnerabilities:
+
+### Built-in Protections
+
+- **CSS Injection Prevention**: All theme customization values are sanitized using allowlist-based validation. Dangerous patterns like `url()`, `expression()`, `<script>`, and CSS injection attempts are automatically blocked.
+- **Memory Exhaustion Protection**: Search input is limited to 2,000 characters maximum to prevent DoS attacks through excessive memory allocation in filtering algorithms.
+- **XSS Protection**: Template content and user input are handled through Blazor's built-in encoding mechanisms.
+- **SIMD Optimization**: AI similarity calculations use hardware-accelerated operations with bounded memory allocation.
+
+### Configuration Limits
+
+```csharp
+<AutoComplete TItem="Product"
+              MaxSearchLength="500"  // Default: 500, Max: 2000
+              ... />
+```
+
+The `MaxSearchLength` parameter allows you to configure the maximum allowed search text length. This prevents:
+- Excessive memory allocation in fuzzy matching algorithms (Levenshtein distance)
+- Performance degradation from processing extremely long search strings
+- Potential denial-of-service attacks
+
+### Theme Customization Safety
+
+All CSS custom properties are validated before rendering:
+
+```csharp
+// ✅ Safe - Valid CSS values pass through
+ThemeOverrides = new ThemeOptions {
+    Colors = new ColorOptions { Primary = "#FF6B6B" },
+    Spacing = new SpacingOptions { BorderRadius = "8px" }
+}
+
+// ❌ Blocked - Malicious values are rejected
+ThemeOverrides = new ThemeOptions {
+    Colors = new ColorOptions { Primary = "url(javascript:alert(1))" }  // Rejected
+}
+```
+
+Supported CSS value types:
+- **Colors**: hex, rgb/rgba, hsl/hsla, named colors
+- **Lengths**: px, em, rem, %, vh, vw (including multi-value like `"10px 20px"`)
+- **Fonts**: Standard font families and generic families
+- **Shadows**: box-shadow and text-shadow syntax
+- **Times**: ms and s units
+
+### Security Best Practices
+
+1. **Use the latest version** to ensure you have all security patches
+2. **Validate user data** on the server side before passing to the component
+3. **Set appropriate `MaxSearchLength`** based on your use case (default 500 is recommended)
+4. **Review theme customizations** if accepting user-provided theme values
+5. **Use CSP headers** for additional XSS protection in production
+
+### Reporting Security Issues
+
+If you discover a security vulnerability, please email info@easyappdev.com instead of using the public issue tracker.
+
 ## Contributing
 
 Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.

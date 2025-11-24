@@ -35,6 +35,13 @@ public class FuzzyFilter<TItem> : IFilterEngine<TItem>
             return items;
         }
 
+        // Security: Prevent memory exhaustion from excessively long search strings
+        const int MaxSearchLength = 2000;
+        if (searchText.Length > MaxSearchLength)
+        {
+            searchText = searchText.Substring(0, MaxSearchLength);
+        }
+
         var searchLower = searchText.ToLowerInvariant();
 
         return items
@@ -65,6 +72,13 @@ public class FuzzyFilter<TItem> : IFilterEngine<TItem>
         if (string.IsNullOrWhiteSpace(searchText))
         {
             return items;
+        }
+
+        // Security: Prevent memory exhaustion from excessively long search strings
+        const int MaxSearchLength = 2000;
+        if (searchText.Length > MaxSearchLength)
+        {
+            searchText = searchText.Substring(0, MaxSearchLength);
         }
 
         var searchLower = searchText.ToLowerInvariant();
@@ -143,8 +157,14 @@ public class FuzzyFilter<TItem> : IFilterEngine<TItem>
             return source.Length;
         }
 
-        var sourceLength = source.Length;
-        var targetLength = target.Length;
+        // Security: Prevent memory exhaustion from excessively long strings
+        // Matrix allocation = (sourceLength + 1) * (targetLength + 1) * sizeof(int)
+        // Limit each dimension to 1000 chars to cap memory at ~4MB per calculation
+        const int MaxLengthForLevenshtein = 1000;
+
+        var sourceLength = Math.Min(source.Length, MaxLengthForLevenshtein);
+        var targetLength = Math.Min(target.Length, MaxLengthForLevenshtein);
+
         var distance = new int[sourceLength + 1, targetLength + 1];
 
         for (var i = 0; i <= sourceLength; distance[i, 0] = i++) { }

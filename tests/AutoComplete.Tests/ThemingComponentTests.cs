@@ -241,48 +241,7 @@ public class ThemingComponentTests : TestContext
         container.ClassList.Should().Contain("ebd-ac-theme-transitions");
     }
 
-    [Fact]
-    public async Task Component_LoadsThemeViaJS_WhenPresetSpecified()
-    {
-        // Arrange
-        var jsInterop = JSInterop.SetupVoid("EasyAppDevAutoComplete.loadTheme", "material");
-
-        // Act
-        var cut = RenderComponent<AutoComplete<string>>(parameters => parameters
-            .Add(p => p.Items, _testCountries)
-            .Add(p => p.ThemePreset, ThemePreset.Material));
-
-        await Task.Delay(100); // Allow async operations to complete
-
-        // Assert
-        var invocations = JSInterop.Invocations["EasyAppDevAutoComplete.loadTheme"];
-        invocations.Should().HaveCountGreaterThan(0);
-        invocations[0].Arguments[0].Should().Be("material");
-    }
-
-    [Theory]
-    [InlineData(ThemePreset.Material, "material")]
-    [InlineData(ThemePreset.Fluent, "fluent")]
-    [InlineData(ThemePreset.Modern, "modern")]
-    [InlineData(ThemePreset.Bootstrap, "bootstrap")]
-    public async Task Component_LoadsCorrectThemeFile_ForEachPreset(ThemePreset preset, string expectedThemeName)
-    {
-        // Arrange
-        JSInterop.Mode = JSRuntimeMode.Loose;
-        JSInterop.SetupVoid("EasyAppDevAutoComplete.loadTheme", expectedThemeName);
-
-        // Act
-        var cut = RenderComponent<AutoComplete<string>>(parameters => parameters
-            .Add(p => p.Items, _testCountries)
-            .Add(p => p.ThemePreset, preset));
-
-        await Task.Delay(100); // Allow async operations to complete
-
-        // Assert
-        var invocations = JSInterop.Invocations["EasyAppDevAutoComplete.loadTheme"];
-        invocations.Should().HaveCountGreaterThan(0);
-        invocations[0].Arguments[0].Should().Be(expectedThemeName);
-    }
+    // Note: JS theme loading tests removed - theme loading was refactored to use CSS classes only
 
     [Fact]
     public async Task Component_DoesNotLoadTheme_WhenPresetIsNone()

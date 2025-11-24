@@ -65,31 +65,15 @@ public class ThemingBenchmarks
     [Benchmark(Baseline = true)]
     public void BuildCustomPropertyStyle_SimpleTheme()
     {
-        // Create a mock JSRuntime for ThemeManager
-        // Since we're only benchmarking the CSS generation, we use null and catch the exception
-        try
-        {
-            var themeManager = new ThemeManager(null!);
-            var css = themeManager.BuildCustomPropertyStyle(_simpleTheme);
-        }
-        catch (ArgumentNullException)
-        {
-            // Expected - we're only testing the method that doesn't use JSRuntime
-        }
+        var themeManager = new ThemeManager();
+        var css = themeManager.BuildCustomPropertyStyle(_simpleTheme);
     }
 
     [Benchmark]
     public void BuildCustomPropertyStyle_ComplexTheme()
     {
-        try
-        {
-            var themeManager = new ThemeManager(null!);
-            var css = themeManager.BuildCustomPropertyStyle(_complexTheme);
-        }
-        catch (ArgumentNullException)
-        {
-            // Expected
-        }
+        var themeManager = new ThemeManager();
+        var css = themeManager.BuildCustomPropertyStyle(_complexTheme);
     }
 
     [Benchmark]

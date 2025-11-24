@@ -35,6 +35,13 @@ public class StartsWithFilter<TItem> : FilterEngineBase<TItem>
             return items;
         }
 
+        // Security: Prevent performance degradation from excessively long search strings
+        const int MaxSearchLength = 2000;
+        if (searchText.Length > MaxSearchLength)
+        {
+            searchText = searchText.Substring(0, MaxSearchLength);
+        }
+
         var searchLower = searchText.ToLowerInvariant();
 
         return items.Where(item =>
