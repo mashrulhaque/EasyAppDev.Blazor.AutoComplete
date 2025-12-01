@@ -7,6 +7,31 @@ using System.Text.RegularExpressions;
 
 namespace EasyAppDev.Blazor.AutoComplete.AI;
 
+// Security: Compiled regex patterns with timeout to prevent ReDoS attacks
+internal static partial class ErrorSanitizationRegex
+{
+    // Timeout of 100ms matches CssSanitizer for consistency
+    private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(100);
+
+    // Pattern to match OpenAI API keys (sk-xxx format)
+    internal static readonly Regex ApiKeyPattern = new(
+        @"sk-[a-zA-Z0-9]{20,}",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase,
+        RegexTimeout);
+
+    // Pattern to match Bearer tokens
+    internal static readonly Regex BearerTokenPattern = new(
+        @"Bearer\s+[a-zA-Z0-9\-._~+/]+=*",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase,
+        RegexTimeout);
+
+    // Pattern to match generic API key parameters
+    internal static readonly Regex GenericApiKeyPattern = new(
+        @"api[_-]?key[:\s]+[a-zA-Z0-9\-_]+",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase,
+        RegexTimeout);
+}
+
 /// <summary>
 /// Provides high-performance semantic search functionality for AutoComplete using AI embeddings.
 /// Uses SIMD-accelerated cosine similarity and intelligent caching for optimal performance.
@@ -288,6 +313,7 @@ public class SemanticSearchDataSource<TItem> : IAutoCompleteDataSource<TItem> wh
 
     /// <summary>
     /// Sanitizes error messages to prevent exposure of API keys and sensitive data.
+    /// Uses compiled regex patterns with timeout protection to prevent ReDoS attacks.
     /// </summary>
     /// <param name="message">The error message to sanitize.</param>
     /// <returns>Sanitized error message safe for display to users.</returns>
@@ -298,14 +324,26 @@ public class SemanticSearchDataSource<TItem> : IAutoCompleteDataSource<TItem> wh
             return "Unknown error occurred";
         }
 
-        var sanitized = message;
+        // Security: Truncate first to prevent excessive regex processing
+        var sanitized = message.Length > 500
+            ? message.Substring(0, 500)
+            : message;
 
-        // Remove potential API keys (patterns like sk-xxx, Bearer xxx, api_key: xxx)
-        sanitized = Regex.Replace(sanitized, @"sk-[a-zA-Z0-9]{20,}", "sk-***", RegexOptions.IgnoreCase);
-        sanitized = Regex.Replace(sanitized, @"Bearer\s+[a-zA-Z0-9\-._~+/]+=*", "Bearer ***", RegexOptions.IgnoreCase);
-        sanitized = Regex.Replace(sanitized, @"api[_-]?key[:\s]+[a-zA-Z0-9\-_]+", "api_key: ***", RegexOptions.IgnoreCase);
+        try
+        {
+            // Remove potential API keys using compiled patterns with timeout
+            sanitized = ErrorSanitizationRegex.ApiKeyPattern.Replace(sanitized, "sk-***");
+            sanitized = ErrorSanitizationRegex.BearerTokenPattern.Replace(sanitized, "Bearer ***");
+            sanitized = ErrorSanitizationRegex.GenericApiKeyPattern.Replace(sanitized, "api_key: ***");
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            // If regex times out, return a generic safe message
+            _logger?.LogWarning("[SECURITY] Regex timeout during error message sanitization");
+            return "An error occurred (details redacted for security)";
+        }
 
-        // Truncate if too long
+        // Truncate final output for display
         if (sanitized.Length > 200)
         {
             sanitized = sanitized.Substring(0, 200) + "...";

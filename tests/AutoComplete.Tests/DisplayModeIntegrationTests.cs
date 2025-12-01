@@ -8,7 +8,7 @@ namespace AutoComplete.Tests;
 /// <summary>
 /// Integration tests for display modes in the AutoComplete component.
 /// </summary>
-public class DisplayModeIntegrationTests : TestContext
+public class DisplayModeIntegrationTests : AutoCompleteTestBase
 {
     private readonly List<ProductWithMetadata> _testProducts = new()
     {

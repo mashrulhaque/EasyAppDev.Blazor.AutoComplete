@@ -6,7 +6,7 @@ namespace AutoComplete.Tests;
 /// <summary>
 /// Unit tests for grouping functionality
 /// </summary>
-public class GroupingTests : TestContext
+public class GroupingTests : AutoCompleteTestBase
 {
     private readonly List<Product> _testProducts = new()
     {

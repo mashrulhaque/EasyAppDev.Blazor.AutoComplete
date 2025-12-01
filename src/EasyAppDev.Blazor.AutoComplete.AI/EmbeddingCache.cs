@@ -6,37 +6,60 @@ namespace EasyAppDev.Blazor.AutoComplete.AI;
 /// <summary>
 /// Provides high-performance caching functionality for embeddings with LRU eviction to reduce API calls.
 /// Uses lock-free concurrent collections for optimal performance under high concurrency.
+/// Includes memory pressure monitoring for proactive cache eviction.
 /// </summary>
 /// <typeparam name="TItem">The type of items to cache embeddings for.</typeparam>
-public class EmbeddingCache<TItem> where TItem : notnull
+public class EmbeddingCache<TItem> : IDisposable where TItem : notnull
 {
     private readonly ConcurrentDictionary<TItem, CachedEmbedding> _cache = new();
     private readonly LinkedList<TItem> _lruList = new();
     private readonly object _lruLock = new();
     private readonly TimeSpan _ttl;
     private readonly int _maxSize;
+    private readonly bool _enableMemoryPressureMonitoring;
+    private readonly double _memoryPressureThreshold;
     private long _hits;
     private long _misses;
+    private bool _disposed;
+
+    /// <summary>
+    /// Event raised when memory pressure is detected and cache eviction is triggered.
+    /// </summary>
+    public event EventHandler<MemoryPressureEventArgs>? MemoryPressureDetected;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="EmbeddingCache{TItem}"/> class.
     /// </summary>
     /// <param name="ttl">Time-to-live for cached embeddings.</param>
     /// <param name="maxSize">Maximum number of embeddings to cache. Default is 10,000. Use -1 for unlimited.</param>
-    public EmbeddingCache(TimeSpan ttl, int maxSize = 10_000)
+    /// <param name="enableMemoryPressureMonitoring">Enable proactive cache eviction under memory pressure. Default is true.</param>
+    /// <param name="memoryPressureThreshold">Memory usage percentage (0.0-1.0) to trigger eviction. Default is 0.85 (85%).</param>
+    public EmbeddingCache(
+        TimeSpan ttl,
+        int maxSize = 10_000,
+        bool enableMemoryPressureMonitoring = true,
+        double memoryPressureThreshold = 0.85)
     {
         if (maxSize == 0)
         {
             throw new ArgumentOutOfRangeException(nameof(maxSize), "Max size must be greater than 0 or -1 for unlimited.");
         }
 
+        if (memoryPressureThreshold is < 0.0 or > 1.0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(memoryPressureThreshold), "Must be between 0.0 and 1.0.");
+        }
+
         _ttl = ttl;
         _maxSize = maxSize;
+        _enableMemoryPressureMonitoring = enableMemoryPressureMonitoring;
+        _memoryPressureThreshold = memoryPressureThreshold;
     }
 
     /// <summary>
     /// Gets an embedding from cache or creates a new one using the provided factory.
     /// Implements LRU eviction policy when cache is full.
+    /// Checks for memory pressure and evicts items proactively if needed.
     /// </summary>
     /// <param name="item">The item to get or create an embedding for.</param>
     /// <param name="factory">Factory function to create a new embedding if not in cache.</param>
@@ -47,6 +70,14 @@ public class EmbeddingCache<TItem> where TItem : notnull
         Func<Task<Embedding<float>>> factory,
         CancellationToken cancellationToken)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
+        // Security: Check memory pressure and evict if needed
+        if (_enableMemoryPressureMonitoring)
+        {
+            CheckMemoryPressure();
+        }
+
         // Fast path: check cache (lock-free read)
         if (_cache.TryGetValue(item, out var cached))
         {
@@ -206,9 +237,118 @@ public class EmbeddingCache<TItem> where TItem : notnull
         Interlocked.Exchange(ref _misses, 0);
     }
 
+    /// <summary>
+    /// Checks for memory pressure and evicts cache entries if needed.
+    /// Uses GC memory info to detect high memory usage.
+    /// </summary>
+    private void CheckMemoryPressure()
+    {
+        try
+        {
+            var memoryInfo = GC.GetGCMemoryInfo();
+            var totalAvailable = memoryInfo.TotalAvailableMemoryBytes;
+            var heapSize = memoryInfo.HeapSizeBytes;
+
+            // Calculate memory usage ratio
+            if (totalAvailable > 0)
+            {
+                var usageRatio = (double)heapSize / totalAvailable;
+
+                if (usageRatio >= _memoryPressureThreshold)
+                {
+                    var itemsBeforeEviction = _cache.Count;
+
+                    // Evict 25% of cache to relieve pressure
+                    var itemsToEvict = Math.Max(1, _cache.Count / 4);
+                    EvictOldestItems(itemsToEvict);
+
+                    // Raise event for monitoring/logging
+                    MemoryPressureDetected?.Invoke(this, new MemoryPressureEventArgs
+                    {
+                        MemoryUsageRatio = usageRatio,
+                        HeapSizeBytes = heapSize,
+                        TotalAvailableBytes = totalAvailable,
+                        ItemsEvicted = itemsBeforeEviction - _cache.Count,
+                        RemainingItems = _cache.Count
+                    });
+                }
+            }
+        }
+        catch
+        {
+            // Swallow exceptions from memory info - monitoring should not break cache
+        }
+    }
+
+    /// <summary>
+    /// Evicts the specified number of oldest items from the cache.
+    /// </summary>
+    /// <param name="count">Number of items to evict.</param>
+    private void EvictOldestItems(int count)
+    {
+        lock (_lruLock)
+        {
+            for (int i = 0; i < count && _lruList.Count > 0; i++)
+            {
+                var oldest = _lruList.First!.Value;
+                _lruList.RemoveFirst();
+                _cache.TryRemove(oldest, out _);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Disposes the cache and releases resources.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed) return;
+
+        _disposed = true;
+        _cache.Clear();
+
+        lock (_lruLock)
+        {
+            _lruList.Clear();
+        }
+
+        GC.SuppressFinalize(this);
+    }
+
     private class CachedEmbedding
     {
         public required Embedding<float> Embedding { get; init; }
         public required DateTime Timestamp { get; init; }
     }
+}
+
+/// <summary>
+/// Event arguments for memory pressure events.
+/// </summary>
+public class MemoryPressureEventArgs : EventArgs
+{
+    /// <summary>
+    /// Gets the memory usage ratio (0.0 to 1.0) that triggered the event.
+    /// </summary>
+    public double MemoryUsageRatio { get; init; }
+
+    /// <summary>
+    /// Gets the current heap size in bytes.
+    /// </summary>
+    public long HeapSizeBytes { get; init; }
+
+    /// <summary>
+    /// Gets the total available memory in bytes.
+    /// </summary>
+    public long TotalAvailableBytes { get; init; }
+
+    /// <summary>
+    /// Gets the number of items evicted from the cache.
+    /// </summary>
+    public int ItemsEvicted { get; init; }
+
+    /// <summary>
+    /// Gets the number of items remaining in the cache after eviction.
+    /// </summary>
+    public int RemainingItems { get; init; }
 }

@@ -7,7 +7,7 @@ namespace AutoComplete.Tests;
 /// <summary>
 /// Integration tests for async data sources
 /// </summary>
-public class AsyncDataSourceTests : TestContext
+public class AsyncDataSourceTests : AutoCompleteTestBase
 {
     [Fact]
     public async Task AutoComplete_WithAsyncDataSource_LoadsData()

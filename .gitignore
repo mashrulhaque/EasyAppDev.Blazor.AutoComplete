@@ -85,6 +85,7 @@ claude-artifacts/
 appsettings.json
 claude_workspace/
 .claude-workspace/
+docs/
 
 ############################
 # Test & Build Output

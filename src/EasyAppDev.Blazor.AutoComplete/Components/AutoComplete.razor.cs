@@ -11,6 +11,7 @@ using EasyAppDev.Blazor.AutoComplete.DataSources;
 using EasyAppDev.Blazor.AutoComplete.Configuration;
 using EasyAppDev.Blazor.AutoComplete.Theming;
 using EasyAppDev.Blazor.AutoComplete.Rendering;
+using EasyAppDev.Blazor.AutoComplete.Input;
 
 namespace EasyAppDev.Blazor.AutoComplete;
 
@@ -207,6 +208,27 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     /// <summary>
     /// Custom template for rendering items.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Security Warning:</b> When using custom templates, ensure you properly encode
+    /// any user-provided data to prevent XSS attacks. Avoid using <c>@Html.Raw()</c> or
+    /// <c>MarkupString</c> with untrusted input.
+    /// </para>
+    /// <para>
+    /// Blazor's default <c>@</c> syntax automatically HTML-encodes output, which is safe.
+    /// Only explicitly unescaped content (via MarkupString) can introduce XSS vulnerabilities.
+    /// </para>
+    /// <example>
+    /// Safe usage:
+    /// <code>
+    /// &lt;AutoComplete ItemTemplate="@(item =&gt; @&lt;span&gt;@item.Name&lt;/span&gt;)" /&gt;
+    /// </code>
+    /// Unsafe (avoid with user input):
+    /// <code>
+    /// &lt;AutoComplete ItemTemplate="@(item =&gt; @((MarkupString)item.HtmlContent))" /&gt;
+    /// </code>
+    /// </example>
+    /// </remarks>
     [Parameter]
     public RenderFragment<TItem>? ItemTemplate { get; set; }
 
@@ -383,6 +405,12 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
 
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
 
+    /// <summary>
+    /// Optional DI-injected theme manager. Falls back to creating instance if not registered.
+    /// </summary>
+    [Inject] private IThemeManager? InjectedThemeManager { get; set; }
+
+    private IInputHandler<TItem>? _inputHandler;
     private string _searchText = string.Empty;
     private bool _isDropdownOpen = false;
     private List<TItem> _filteredItems = new();
@@ -401,10 +429,11 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     private FieldIdentifier _fieldIdentifier;
     private bool _isLoading = false;
     private CancellationTokenSource? _loadingCancellationTokenSource;
+    private CancellationTokenSource? _focusOutCancellationTokenSource;
     private bool _shouldPreventDefault = false;
 
     // Theme management
-    private ThemeManager? _themeManager;
+    private IThemeManager? _themeManager;
     private string? _themeStyle;
     private string _themeClasses = string.Empty;
 
@@ -427,18 +456,56 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     {
         base.OnInitialized();
 
-        // Initialize theme manager
-        _themeManager = new ThemeManager();
+        // Initialize services (uses DI when available, falls back to creating instances)
+        InitializeServices();
 
-        // Compile field expressions using ExpressionCompiler utility
+        // Compile field expressions for data extraction
+        InitializeFieldAccessors();
+
+        // Initialize filter engine based on strategy
+        InitializeFilterEngine();
+
+        // Initialize display mode renderer
+        InitializeDisplayModeRenderer();
+
+        // Initialize input handling and UI services
+        InitializeInputServices();
+
+        // Set up form validation integration
+        InitializeValidation();
+    }
+
+    /// <summary>
+    /// Initializes core services. Uses DI-injected services when available,
+    /// falls back to creating instances for backward compatibility.
+    /// </summary>
+    private void InitializeServices()
+    {
+        // Use injected theme manager if available, otherwise create instance
+        _themeManager = InjectedThemeManager ?? new ThemeManager();
+
+        // Initialize input handler with configured max search length
+        _inputHandler = new InputHandler<TItem>(MaxSearchLength);
+    }
+
+    /// <summary>
+    /// Compiles LINQ expressions into delegates for field value extraction.
+    /// </summary>
+    private void InitializeFieldAccessors()
+    {
         _textFieldAccessor = ExpressionCompiler.CompileOrNull(TextField);
         _searchFieldsAccessor = ExpressionCompiler.CompileFieldsOrNull(SearchFields);
         _descriptionFieldAccessor = ExpressionCompiler.CompileOrNull(DescriptionField);
         _badgeFieldAccessor = ExpressionCompiler.CompileOrNull(BadgeField);
         _iconFieldAccessor = ExpressionCompiler.CompileOrNull(IconField);
         _subtitleFieldAccessor = ExpressionCompiler.CompileOrNull(SubtitleField);
+    }
 
-        // Initialize filter engine based on strategy
+    /// <summary>
+    /// Initializes the filter engine based on the configured strategy.
+    /// </summary>
+    private void InitializeFilterEngine()
+    {
         _filterEngine = FilterStrategy switch
         {
             FilterStrategy.StartsWith => new StartsWithFilter<TItem>(),
@@ -447,8 +514,13 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
             FilterStrategy.Custom when CustomFilter != null => CustomFilter,
             _ => new StartsWithFilter<TItem>()
         };
+    }
 
-        // Initialize display mode renderer
+    /// <summary>
+    /// Initializes the display mode renderer and render context.
+    /// </summary>
+    private void InitializeDisplayModeRenderer()
+    {
         _displayModeRenderer = DisplayModeRendererFactory.GetRenderer<TItem>(DisplayMode);
         _renderContext = new DisplayModeRenderContext<TItem>
         {
@@ -459,7 +531,13 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
             GetSubtitleText = GetSubtitleText,
             BadgeClass = BadgeClass
         };
+    }
 
+    /// <summary>
+    /// Initializes input-related services including debounce timer and keyboard navigation.
+    /// </summary>
+    private void InitializeInputServices()
+    {
         // Initialize debounce timer if debouncing is enabled
         if (DebounceMs > 0)
         {
@@ -468,8 +546,13 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
 
         // Initialize keyboard navigation handler
         _keyboardHandler = new KeyboardNavigationHandler<TItem>(_filteredItems);
+    }
 
-        // Set up validation if EditContext and ValueExpression are provided
+    /// <summary>
+    /// Sets up form validation integration with EditContext.
+    /// </summary>
+    private void InitializeValidation()
+    {
         if (EditContext != null && ValueExpression != null)
         {
             _fieldIdentifier = FieldIdentifier.Create(ValueExpression);
@@ -648,12 +731,22 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
 
     private void OnFocusOut()
     {
+        // Cancel any previous focus-out delay to prevent task accumulation
+        _focusOutCancellationTokenSource?.Cancel();
+        _focusOutCancellationTokenSource?.Dispose();
+        _focusOutCancellationTokenSource = new CancellationTokenSource();
+
+        var cancellationToken = _focusOutCancellationTokenSource.Token;
+
         // Delay to allow click events on dropdown items
-        Task.Delay(200).ContinueWith(_ =>
+        _ = Task.Delay(200, cancellationToken).ContinueWith(async _ =>
         {
-            _isDropdownOpen = false;
-            InvokeAsync(StateHasChanged);
-        });
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                _isDropdownOpen = false;
+                await InvokeAsync(StateHasChanged);
+            }
+        }, cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);
     }
 
     private async Task SelectItem(TItem item)
@@ -1026,8 +1119,12 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         _debounceTimer?.Dispose();
+
         _loadingCancellationTokenSource?.Cancel();
         _loadingCancellationTokenSource?.Dispose();
+
+        _focusOutCancellationTokenSource?.Cancel();
+        _focusOutCancellationTokenSource?.Dispose();
 
         if (EditContext != null)
         {

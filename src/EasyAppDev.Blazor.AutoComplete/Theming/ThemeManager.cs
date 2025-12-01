@@ -11,7 +11,7 @@ namespace EasyAppDev.Blazor.AutoComplete.Theming;
 /// Handles CSS custom property generation and theme class generation.
 /// All themes are loaded statically via autocomplete.themes.css (no dynamic loading).
 /// </summary>
-public class ThemeManager
+public class ThemeManager : IThemeManager
 {
     /// <summary>
     /// Initializes a new instance of the ThemeManager class.

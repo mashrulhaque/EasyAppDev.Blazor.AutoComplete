@@ -7,7 +7,7 @@ namespace AutoComplete.Tests;
 /// <summary>
 /// Unit tests for the AutoComplete component basic functionality.
 /// </summary>
-public class AutoCompleteComponentTests : TestContext
+public class AutoCompleteComponentTests : AutoCompleteTestBase
 {
     private readonly List<Product> _testProducts = new()
     {

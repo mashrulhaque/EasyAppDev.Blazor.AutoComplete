@@ -9,7 +9,7 @@ namespace AutoComplete.Tests;
 /// <summary>
 /// Unit tests for edge cases and null handling in AutoComplete component.
 /// </summary>
-public class EdgeCaseTests : TestContext
+public class EdgeCaseTests : AutoCompleteTestBase
 {
     #region Null and Empty Collection Tests
 

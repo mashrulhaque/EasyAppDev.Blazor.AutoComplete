@@ -9,7 +9,7 @@ namespace AutoComplete.Tests;
 /// <summary>
 /// Component tests for theming functionality using bUnit.
 /// </summary>
-public class ThemingComponentTests : TestContext
+public class ThemingComponentTests : AutoCompleteTestBase
 {
     private readonly List<string> _testCountries = new()
     {

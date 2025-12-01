@@ -9,7 +9,7 @@ namespace AutoComplete.Tests;
 /// <summary>
 /// Unit tests for error scenarios and exception handling.
 /// </summary>
-public class ErrorScenarioTests : TestContext
+public class ErrorScenarioTests : AutoCompleteTestBase
 {
     #region Async Data Source Error Tests
 

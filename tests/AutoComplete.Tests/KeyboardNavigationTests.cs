@@ -7,7 +7,7 @@ namespace AutoComplete.Tests;
 /// <summary>
 /// Unit tests for keyboard navigation functionality
 /// </summary>
-public class KeyboardNavigationTests : TestContext
+public class KeyboardNavigationTests : AutoCompleteTestBase
 {
     private readonly List<Product> _testProducts = new()
     {

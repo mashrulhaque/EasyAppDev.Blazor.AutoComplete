@@ -7,7 +7,7 @@ namespace AutoComplete.Tests;
 /// <summary>
 /// Unit tests for filtering functionality
 /// </summary>
-public class FilteringTests : TestContext
+public class FilteringTests : AutoCompleteTestBase
 {
     private readonly List<Product> _testProducts = new()
     {
