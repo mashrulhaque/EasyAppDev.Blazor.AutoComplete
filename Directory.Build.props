@@ -24,8 +24,8 @@
     <PackageTags>blazor;autocomplete;component;ai;semantic-search;performance;trimming;aot;wcag;accessibility;theming;virtualization</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>1.0.1</Version>
-    <PackageReleaseNotes>Version 1.0.1 - Maintenance release with bug fixes and improvements.</PackageReleaseNotes>
+    <Version>1.0.2</Version>
+    <PackageReleaseNotes>Version 1.0.2 - Streamlined documentation, security enhancements, and improved test coverage.</PackageReleaseNotes>
     <Copyright>Copyright (c) 2025 EasyAppDev</Copyright>
 
     <!-- Documentation -->
