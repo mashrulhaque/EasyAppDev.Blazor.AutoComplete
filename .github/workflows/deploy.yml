@@ -1,0 +1,51 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            echo "[$(date)] Starting deployment..."
+
+            # Navigate to repository
+            cd /root/EasyAppDev.Blazor.AutoComplete
+
+            # Pull latest changes
+            echo "[$(date)] Pulling latest changes..."
+            git pull origin main
+
+            # Publish the application
+            echo "[$(date)] Publishing application..."
+            /root/.dotnet/dotnet publish samples/AutoComplete.Playground -c Release -o /var/www/blazorautocomplete
+
+            # Copy RCL static assets
+            echo "[$(date)] Copying RCL static assets..."
+            mkdir -p /var/www/blazorautocomplete/wwwroot/_content/EasyAppDev.Blazor.AutoComplete/styles
+            cp src/EasyAppDev.Blazor.AutoComplete/wwwroot/styles/*.css /var/www/blazorautocomplete/wwwroot/_content/EasyAppDev.Blazor.AutoComplete/styles/
+
+            # Restart the service
+            echo "[$(date)] Restarting service..."
+            systemctl restart blazorautocomplete.service
+
+            # Wait and verify
+            sleep 3
+            if systemctl is-active --quiet blazorautocomplete.service; then
+              echo "[$(date)] Deployment successful!"
+            else
+              echo "[$(date)] ERROR: Service failed to start!"
+              systemctl status blazorautocomplete.service --no-pager
+              exit 1
+            fi
