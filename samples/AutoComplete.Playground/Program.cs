@@ -1,4 +1,5 @@
 using AutoComplete.Playground.Components;
+using EasyAppDev.Blazor.AutoComplete.Extensions;
 using Microsoft.Extensions.AI;
 using Microsoft.SemanticKernel;
 
@@ -16,6 +17,9 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Register AutoComplete core services (IThemeManager, etc.)
+builder.Services.AddAutoComplete();
 
 // Configure OpenAI for semantic search using the simplified extension method
 builder.Services.AddAutoCompleteSemanticSearch(builder.Configuration);
