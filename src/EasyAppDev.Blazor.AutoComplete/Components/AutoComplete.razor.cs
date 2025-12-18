@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using System.Linq.Expressions;
 using EasyAppDev.Blazor.AutoComplete.Filtering;
@@ -12,6 +13,8 @@ using EasyAppDev.Blazor.AutoComplete.Configuration;
 using EasyAppDev.Blazor.AutoComplete.Theming;
 using EasyAppDev.Blazor.AutoComplete.Rendering;
 using EasyAppDev.Blazor.AutoComplete.Input;
+using EasyAppDev.Blazor.AutoComplete.Security;
+using EasyAppDev.Blazor.AutoComplete.Services;
 
 namespace EasyAppDev.Blazor.AutoComplete;
 
@@ -74,13 +77,13 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     /// Minimum number of characters required before searching.
     /// </summary>
     [Parameter]
-    public int MinSearchLength { get; set; } = 1;
+    public int MinSearchLength { get; set; } = AutoCompleteConstants.DefaultMinSearchLength;
 
     /// <summary>
     /// Maximum number of items to display in the dropdown.
     /// </summary>
     [Parameter]
-    public int MaxDisplayedItems { get; set; } = 100;
+    public int MaxDisplayedItems { get; set; } = AutoCompleteConstants.DefaultMaxDisplayedItems;
 
     /// <summary>
     /// Whether to show a clear button when text is entered.
@@ -243,7 +246,7 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     /// Default is 300ms.
     /// </summary>
     [Parameter]
-    public int DebounceMs { get; set; } = 300;
+    public int DebounceMs { get; set; } = AutoCompleteConstants.DefaultDebounceMs;
 
     /// <summary>
     /// Maximum allowed length for search text to prevent memory exhaustion attacks.
@@ -251,7 +254,7 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     /// Values exceeding this limit will be truncated.
     /// </summary>
     [Parameter]
-    public int MaxSearchLength { get; set; } = 500;
+    public int MaxSearchLength { get; set; } = AutoCompleteConstants.DefaultMaxSearchLength;
 
     /// <summary>
     /// Whether to enable virtualization for large datasets.
@@ -264,14 +267,14 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     /// Default is 100 items.
     /// </summary>
     [Parameter]
-    public int VirtualizationThreshold { get; set; } = 100;
+    public int VirtualizationThreshold { get; set; } = AutoCompleteConstants.DefaultVirtualizationThreshold;
 
     /// <summary>
     /// Height of each item in pixels (required for virtualization).
     /// Default is 40px.
     /// </summary>
     [Parameter]
-    public float ItemHeight { get; set; } = 40f;
+    public float ItemHeight { get; set; } = AutoCompleteConstants.DefaultItemHeight;
 
     /// <summary>
     /// The filtering strategy to use.
@@ -337,7 +340,7 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     /// Default is "badge bg-primary" (Bootstrap 5 style).
     /// </summary>
     [Parameter]
-    public string BadgeClass { get; set; } = "badge bg-primary";
+    public string BadgeClass { get; set; } = AutoCompleteConstants.DefaultBadgeClass;
 
     /// <summary>
     /// Async data source for remote data fetching.
@@ -410,6 +413,17 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     /// </summary>
     [Inject] private IThemeManager? InjectedThemeManager { get; set; }
 
+    /// <summary>
+    /// Optional logger for diagnostics and configuration warnings.
+    /// </summary>
+    [Inject] private ILogger<AutoComplete<TItem>>? Logger { get; set; }
+
+    /// <summary>
+    /// Optional DI-injected service factory. Falls back to creating a default factory if not registered.
+    /// </summary>
+    [Inject] private IAutoCompleteServiceFactory? InjectedServiceFactory { get; set; }
+
+    private IAutoCompleteServiceFactory _serviceFactory = null!;
     private IInputHandler<TItem>? _inputHandler;
     private string _searchText = string.Empty;
     private bool _isDropdownOpen = false;
@@ -421,10 +435,11 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     private Func<TItem, string>? _iconFieldAccessor;
     private Func<TItem, string>? _subtitleFieldAccessor;
     private Func<TItem, string[]>? _searchFieldsAccessor;
+    private Func<TItem, object>? _groupByAccessor;
     private IFilterEngine<TItem> _filterEngine = new StartsWithFilter<TItem>();
     private IDisplayModeRenderer<TItem> _displayModeRenderer = null!;
     private DisplayModeRenderContext<TItem> _renderContext = null!;
-    private DebounceTimer? _debounceTimer;
+    private IDebouncer? _debouncer;
     private KeyboardNavigationHandler<TItem>? _keyboardHandler;
     private FieldIdentifier _fieldIdentifier;
     private bool _isLoading = false;
@@ -481,15 +496,44 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     /// </summary>
     private void InitializeServices()
     {
-        // Use injected theme manager if available, otherwise create instance
-        _themeManager = InjectedThemeManager ?? new ThemeManager();
+        // Use injected service factory if available, otherwise create default
+        if (InjectedServiceFactory != null)
+        {
+            _serviceFactory = InjectedServiceFactory;
+        }
+        else
+        {
+            _serviceFactory = new AutoCompleteServiceFactory();
 
-        // Initialize input handler with configured max search length
-        _inputHandler = new InputHandler<TItem>(MaxSearchLength);
+            Logger?.LogDebug(
+                SecurityEventId.ServiceFallback,
+                "IAutoCompleteServiceFactory not registered in DI. Using fallback instance. " +
+                "Consider calling services.AddAutoComplete() in application startup for better testability.");
+        }
+
+        // Use injected theme manager if available, otherwise create instance
+        if (InjectedThemeManager != null)
+        {
+            _themeManager = InjectedThemeManager;
+        }
+        else
+        {
+            _themeManager = new ThemeManager();
+
+            // Log warning in debug mode to help developers identify missing DI registration
+            Logger?.LogDebug(
+                SecurityEventId.ServiceFallback,
+                "IThemeManager not registered in DI. Using fallback instance. " +
+                "Consider calling services.AddAutoComplete() in application startup for better testability.");
+        }
+
+        // Initialize input handler using factory
+        _inputHandler = _serviceFactory.CreateInputHandler<TItem>(MaxSearchLength);
     }
 
     /// <summary>
     /// Compiles LINQ expressions into delegates for field value extraction.
+    /// Expressions are compiled once during initialization for performance.
     /// </summary>
     private void InitializeFieldAccessors()
     {
@@ -499,6 +543,9 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
         _badgeFieldAccessor = ExpressionCompiler.CompileOrNull(BadgeField);
         _iconFieldAccessor = ExpressionCompiler.CompileOrNull(IconField);
         _subtitleFieldAccessor = ExpressionCompiler.CompileOrNull(SubtitleField);
+
+        // Compile GroupBy expression once to avoid recompilation on every filter operation
+        _groupByAccessor = GroupBy?.Compile();
     }
 
     /// <summary>
@@ -534,18 +581,15 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     }
 
     /// <summary>
-    /// Initializes input-related services including debounce timer and keyboard navigation.
+    /// Initializes input-related services including debouncer and keyboard navigation.
     /// </summary>
     private void InitializeInputServices()
     {
-        // Initialize debounce timer if debouncing is enabled
-        if (DebounceMs > 0)
-        {
-            _debounceTimer = new DebounceTimer(DebounceMs);
-        }
+        // Initialize debouncer using factory (returns null if DebounceMs <= 0)
+        _debouncer = _serviceFactory.CreateDebouncer(DebounceMs);
 
-        // Initialize keyboard navigation handler
-        _keyboardHandler = new KeyboardNavigationHandler<TItem>(_filteredItems);
+        // Initialize keyboard navigation handler using factory
+        _keyboardHandler = _serviceFactory.CreateKeyboardHandler(_filteredItems);
     }
 
     /// <summary>
@@ -611,11 +655,11 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
 
         if (_searchText.Length >= MinSearchLength)
         {
-            if (_debounceTimer != null)
+            if (_debouncer != null)
             {
                 // Capture the current search text to avoid closure issues
                 var currentSearchText = _searchText;
-                _debounceTimer.Debounce(async () =>
+                _debouncer.DebounceAsync(async () =>
                 {
                     // Only filter if the search text hasn't changed
                     if (_searchText == currentSearchText)
@@ -651,7 +695,7 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
         else
         {
             // Cancel any pending debounced actions
-            _debounceTimer?.Cancel();
+            _debouncer?.Cancel();
 
             _filteredItems.Clear();
             _groupedItems.Clear();
@@ -739,7 +783,7 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
         var cancellationToken = _focusOutCancellationTokenSource.Token;
 
         // Delay to allow click events on dropdown items
-        _ = Task.Delay(200, cancellationToken).ContinueWith(async _ =>
+        _ = Task.Delay(AutoCompleteConstants.FocusOutDelayMs, cancellationToken).ContinueWith(async _ =>
         {
             if (!cancellationToken.IsCancellationRequested)
             {
@@ -773,7 +817,7 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     private void ClearSearch()
     {
         // Cancel any pending debounced actions
-        _debounceTimer?.Cancel();
+        _debouncer?.Cancel();
 
         _searchText = string.Empty;
         _filteredItems.Clear();
@@ -800,12 +844,11 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     #region Helper Methods
 
     /// <summary>
-    /// Gets the effective maximum search length, enforcing a hard limit of 2000 characters.
+    /// Gets the effective maximum search length, enforcing a hard limit.
     /// </summary>
     private int GetEffectiveMaxSearchLength()
     {
-        const int AbsoluteMaxLength = 2000;
-        return Math.Min(MaxSearchLength, AbsoluteMaxLength);
+        return Math.Min(MaxSearchLength, AutoCompleteConstants.AbsoluteMaxSearchLength);
     }
 
     private async Task FilterItemsAsync()
@@ -856,12 +899,11 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
                 return;
             }
 
-            // Apply grouping if needed
-            if (HasGrouping && GroupBy != null)
+            // Apply grouping if needed (uses pre-compiled accessor for performance)
+            if (HasGrouping && _groupByAccessor != null)
             {
-                var groupSelector = GroupBy.Compile();
                 _groupedItems = itemsToFilter
-                    .GroupBy(item => groupSelector(item))
+                    .GroupBy(item => _groupByAccessor(item))
                     .ToList();
                 _filteredItems = new List<TItem>();
             }
@@ -956,7 +998,7 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
 
     private string DirectionAttribute => RightToLeft ? "rtl" : "ltr";
 
-    private bool HasGrouping => GroupBy != null;
+    private bool HasGrouping => _groupByAccessor != null;
 
     #endregion
 
@@ -1118,7 +1160,7 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     /// </summary>
     public async ValueTask DisposeAsync()
     {
-        _debounceTimer?.Dispose();
+        _debouncer?.Dispose();
 
         _loadingCancellationTokenSource?.Cancel();
         _loadingCancellationTokenSource?.Dispose();

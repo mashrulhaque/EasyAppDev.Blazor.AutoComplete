@@ -1,5 +1,6 @@
 using EasyAppDev.Blazor.AutoComplete.Theming;
 using EasyAppDev.Blazor.AutoComplete.Input;
+using EasyAppDev.Blazor.AutoComplete.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Diagnostics.CodeAnalysis;
@@ -20,6 +21,7 @@ public static class ServiceCollectionExtensions
     /// <remarks>
     /// Services registered:
     /// - IThemeManager (Singleton): Theme management service for CSS class and property generation.
+    /// - IAutoCompleteServiceFactory (Singleton): Factory for creating component-scoped services.
     ///
     /// Usage:
     /// <code>
@@ -33,6 +35,7 @@ public static class ServiceCollectionExtensions
     {
         // Use TryAdd to avoid overwriting existing registrations
         services.TryAddSingleton<IThemeManager, ThemeManager>();
+        services.TryAddSingleton<IAutoCompleteServiceFactory, AutoCompleteServiceFactory>();
 
         return services;
     }

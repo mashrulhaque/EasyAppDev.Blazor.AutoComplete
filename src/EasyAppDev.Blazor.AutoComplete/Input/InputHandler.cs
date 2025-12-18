@@ -7,18 +7,16 @@ namespace EasyAppDev.Blazor.AutoComplete.Input;
 /// <typeparam name="TItem">The type of items in the autocomplete list.</typeparam>
 public class InputHandler<TItem> : IInputHandler<TItem>
 {
-    private const int AbsoluteMaxSearchLength = 2000;
-
     private readonly int _maxSearchLength;
     private string _searchText = string.Empty;
 
     /// <summary>
     /// Initializes a new instance of InputHandler with the specified max search length.
     /// </summary>
-    /// <param name="maxSearchLength">Maximum allowed search length (will be capped at 2000).</param>
-    public InputHandler(int maxSearchLength = 500)
+    /// <param name="maxSearchLength">Maximum allowed search length (will be capped at absolute max).</param>
+    public InputHandler(int maxSearchLength = AutoCompleteConstants.DefaultMaxSearchLength)
     {
-        _maxSearchLength = Math.Min(maxSearchLength, AbsoluteMaxSearchLength);
+        _maxSearchLength = Math.Min(maxSearchLength, AutoCompleteConstants.AbsoluteMaxSearchLength);
     }
 
     /// <inheritdoc />

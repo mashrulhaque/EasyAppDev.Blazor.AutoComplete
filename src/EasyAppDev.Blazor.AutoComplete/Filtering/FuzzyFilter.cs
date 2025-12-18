@@ -13,7 +13,7 @@ public class FuzzyFilter<TItem> : IFilterEngine<TItem>
     /// Initializes a new instance of the <see cref="FuzzyFilter{TItem}"/> class.
     /// </summary>
     /// <param name="maxDistance">Maximum Levenshtein distance to consider a match. Default is 2.</param>
-    public FuzzyFilter(int maxDistance = 2)
+    public FuzzyFilter(int maxDistance = AutoCompleteConstants.MaxFuzzyDistance)
     {
         _maxDistance = maxDistance;
     }
@@ -36,10 +36,9 @@ public class FuzzyFilter<TItem> : IFilterEngine<TItem>
         }
 
         // Security: Prevent memory exhaustion from excessively long search strings
-        const int MaxSearchLength = 2000;
-        if (searchText.Length > MaxSearchLength)
+        if (searchText.Length > AutoCompleteConstants.AbsoluteMaxSearchLength)
         {
-            searchText = searchText.Substring(0, MaxSearchLength);
+            searchText = searchText.Substring(0, AutoCompleteConstants.AbsoluteMaxSearchLength);
         }
 
         var searchLower = searchText.ToLowerInvariant();
@@ -75,10 +74,9 @@ public class FuzzyFilter<TItem> : IFilterEngine<TItem>
         }
 
         // Security: Prevent memory exhaustion from excessively long search strings
-        const int MaxSearchLength = 2000;
-        if (searchText.Length > MaxSearchLength)
+        if (searchText.Length > AutoCompleteConstants.AbsoluteMaxSearchLength)
         {
-            searchText = searchText.Substring(0, MaxSearchLength);
+            searchText = searchText.Substring(0, AutoCompleteConstants.AbsoluteMaxSearchLength);
         }
 
         var searchLower = searchText.ToLowerInvariant();
@@ -159,11 +157,9 @@ public class FuzzyFilter<TItem> : IFilterEngine<TItem>
 
         // Security: Prevent memory exhaustion from excessively long strings
         // Matrix allocation = (sourceLength + 1) * (targetLength + 1) * sizeof(int)
-        // Limit each dimension to 1000 chars to cap memory at ~4MB per calculation
-        const int MaxLengthForLevenshtein = 1000;
-
-        var sourceLength = Math.Min(source.Length, MaxLengthForLevenshtein);
-        var targetLength = Math.Min(target.Length, MaxLengthForLevenshtein);
+        // Limit each dimension to cap memory at ~4MB per calculation
+        var sourceLength = Math.Min(source.Length, AutoCompleteConstants.MaxLevenshteinDimensionLength);
+        var targetLength = Math.Min(target.Length, AutoCompleteConstants.MaxLevenshteinDimensionLength);
 
         var distance = new int[sourceLength + 1, targetLength + 1];
 

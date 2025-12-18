@@ -144,4 +144,15 @@ public static class SecurityEventId
     /// potentially exposing data to man-in-the-middle attacks.
     /// </remarks>
     public static readonly EventId HttpsViolation = new(9009, "HttpsViolation");
+
+    /// <summary>
+    /// Configuration warning - using fallback instead of DI-registered service.
+    /// </summary>
+    /// <remarks>
+    /// <b>Severity:</b> Debug<br/>
+    /// <b>Description:</b> A required service was not registered in DI, so the component
+    /// is using a fallback instance. This may hide configuration errors.
+    /// <b>Resolution:</b> Call <c>services.AddAutoComplete()</c> in application startup.
+    /// </remarks>
+    public static readonly EventId ServiceFallback = new(9010, "ServiceFallback");
 }

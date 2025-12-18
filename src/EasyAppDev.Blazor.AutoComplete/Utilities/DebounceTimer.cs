@@ -15,7 +15,7 @@ public sealed class DebounceTimer : IDisposable
     /// Initializes a new instance of the <see cref="DebounceTimer"/> class.
     /// </summary>
     /// <param name="intervalMs">The debounce interval in milliseconds. Default is 300ms.</param>
-    public DebounceTimer(int intervalMs = 300)
+    public DebounceTimer(int intervalMs = AutoCompleteConstants.DefaultDebounceMs)
     {
         _timer = new System.Timers.Timer(intervalMs);
         _timer.Elapsed += OnTimerElapsed;

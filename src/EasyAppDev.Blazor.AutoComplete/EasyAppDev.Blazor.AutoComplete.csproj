@@ -9,6 +9,9 @@
     <!-- Enable static web assets -->
     <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+
+    <!-- Disable manual configuration fallback since source generator is referenced -->
+    <DefineConstants>$(DefineConstants);AUTOCOMPLETE_USE_GENERATED_CONFIG</DefineConstants>
   </PropertyGroup>
 
   <!-- Package README and Icon -->

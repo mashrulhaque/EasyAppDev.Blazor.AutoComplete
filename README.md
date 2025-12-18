@@ -25,7 +25,19 @@ dotnet add package EasyAppDev.Blazor.AutoComplete
 
 ## Setup
 
-Add to your `App.razor` or `index.html`:
+**1. Register services** in `Program.cs`:
+
+```csharp
+using EasyAppDev.Blazor.AutoComplete.Extensions;
+
+builder.Services.AddAutoComplete();
+```
+
+This registers:
+- `IThemeManager` - Theme CSS generation (singleton)
+- `IAutoCompleteServiceFactory` - Creates component services (singleton)
+
+**2. Add styles** to your `App.razor` or `index.html`:
 
 ```html
 <head>
@@ -34,11 +46,7 @@ Add to your `App.razor` or `index.html`:
 </head>
 ```
 
-**Optional:** Register services for singleton theme management:
-
-```csharp
-builder.Services.AddAutoComplete();
-```
+> **Note:** The component works without `AddAutoComplete()` using fallback instances, but registering services enables proper DI, testability, and singleton behavior.
 
 ## Basic Usage
 
@@ -432,8 +440,9 @@ Configuration in `appsettings.json`:
 
 - **CSS Sanitization** - Theme values validated against allowlists
 - **Input Limits** - `MaxSearchLength` prevents memory exhaustion (default 500, max 2000)
-- **ReDoS Protection** - Regex patterns use timeouts
+- **ReDoS Protection** - Regex patterns use 100ms timeouts
 - **API Key Redaction** - Sensitive data removed from error messages
+- **Centralized Constants** - All limits defined in `AutoCompleteConstants` for consistency
 
 ## Packages
 
