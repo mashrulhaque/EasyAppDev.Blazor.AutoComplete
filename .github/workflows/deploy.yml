@@ -23,9 +23,10 @@ jobs:
             # Navigate to repository
             cd /root/EasyAppDev.Blazor.AutoComplete
 
-            # Pull latest changes
-            echo "[$(date)] Pulling latest changes..."
-            git pull origin main
+            # Fetch and reset to remote main (handles divergent branches)
+            echo "[$(date)] Fetching and resetting to remote main..."
+            git fetch origin main
+            git reset --hard origin/main
 
             # Publish the application
             echo "[$(date)] Publishing application..."
