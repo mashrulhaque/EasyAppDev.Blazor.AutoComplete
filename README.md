@@ -15,7 +15,7 @@ A high-performance AutoComplete component for Blazor with AI-powered semantic se
 - **Accessible** - WCAG 2.1 AA, ARIA 1.2 Combobox pattern, keyboard navigation
 - **Theming** - 4 design presets (Material, Fluent, Modern, Bootstrap), CSS variables
 - **8 Display Modes** - Built-in layouts eliminate template boilerplate
-- **.NET 8/9** - WebAssembly, Server, Auto render modes
+- **.NET 8/9/10** - WebAssembly, Server, Auto render modes
 
 ## Installation
 
@@ -445,7 +445,7 @@ Configuration in `appsettings.json`:
 
 ## Requirements
 
-- .NET 8.0 or .NET 9.0
+- .NET 8.0, .NET 9.0, or .NET 10.0
 - Blazor WebAssembly, Server, or Auto
 
 ## License

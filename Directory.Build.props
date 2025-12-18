@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
-    <!-- Multi-targeting for .NET 8 and .NET 9 -->
-    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <!-- Multi-targeting for .NET 8, .NET 9, and .NET 10 -->
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -24,8 +24,8 @@
     <PackageTags>blazor;autocomplete;component;ai;semantic-search;performance;trimming;aot;wcag;accessibility;theming;virtualization</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>1.0.2</Version>
-    <PackageReleaseNotes>Version 1.0.2 - Streamlined documentation, security enhancements, and improved test coverage.</PackageReleaseNotes>
+    <Version>1.0.3</Version>
+    <PackageReleaseNotes>Version 1.0.3 - Added .NET 10 support. Now targets .NET 8, .NET 9, and .NET 10.</PackageReleaseNotes>
     <Copyright>Copyright (c) 2025 EasyAppDev</Copyright>
 
     <!-- Documentation -->
