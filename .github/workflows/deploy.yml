@@ -20,6 +20,18 @@ jobs:
             set -e
             echo "[$(date)] Starting deployment..."
 
+            # Install .NET 10 SDK if not present
+            DOTNET_ROOT="/root/.dotnet"
+            if ! $DOTNET_ROOT/dotnet --list-sdks 2>/dev/null | grep -q "10.0"; then
+              echo "[$(date)] Installing .NET 10 SDK..."
+              wget -q https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.101/dotnet-sdk-10.0.101-linux-x64.tar.gz -O /tmp/dotnet-sdk-10.tar.gz
+              tar -xzf /tmp/dotnet-sdk-10.tar.gz -C $DOTNET_ROOT
+              rm /tmp/dotnet-sdk-10.tar.gz
+              echo "[$(date)] .NET 10 SDK installed successfully"
+            else
+              echo "[$(date)] .NET 10 SDK already installed"
+            fi
+
             # Navigate to repository
             cd /root/EasyAppDev.Blazor.AutoComplete
 
@@ -30,7 +42,7 @@ jobs:
 
             # Publish the application
             echo "[$(date)] Publishing application..."
-            /root/.dotnet/dotnet publish samples/AutoComplete.Playground -c Release -o /var/www/blazorautocomplete
+            $DOTNET_ROOT/dotnet publish samples/AutoComplete.Playground -c Release -o /var/www/blazorautocomplete
 
             # Copy RCL static assets
             echo "[$(date)] Copying RCL static assets..."
