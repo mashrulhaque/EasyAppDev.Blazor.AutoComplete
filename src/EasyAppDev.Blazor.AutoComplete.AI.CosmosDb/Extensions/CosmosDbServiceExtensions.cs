@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.AI;
 using Microsoft.SemanticKernel.Connectors.CosmosNoSql;
@@ -13,6 +14,63 @@ namespace EasyAppDev.Blazor.AutoComplete.AI.CosmosDb.Extensions;
 /// </summary>
 public static class CosmosDbServiceExtensions
 {
+    /// <summary>
+    /// Adds Azure CosmosDB as the vector search provider using configuration from appsettings.json.
+    /// </summary>
+    /// <typeparam name="TItem">The item type to search.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration instance.</param>
+    /// <param name="configSection">The configuration section name. Default: "VectorSearch:CosmosDb".</param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when services or configuration is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when configuration section is missing or options are invalid.</exception>
+    /// <example>
+    /// appsettings.json:
+    /// {
+    ///   "VectorSearch": {
+    ///     "CosmosDb": {
+    ///       "ConnectionString": "AccountEndpoint=https://myaccount.documents.azure.com:443/;AccountKey=...",
+    ///       "DatabaseName": "myapp",
+    ///       "ContainerName": "products",
+    ///       "EmbeddingDimensions": 1536,
+    ///       "VectorIndexType": "quantizedFlat"
+    ///     }
+    ///   }
+    /// }
+    /// </example>
+    public static IServiceCollection AddAutoCompleteCosmosDbProvider<TItem>(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string configSection = "VectorSearch:CosmosDb")
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var section = configuration.GetSection(configSection);
+        if (!section.Exists())
+        {
+            throw new ArgumentException(
+                $"Configuration section '{configSection}' not found. " +
+                "Ensure your appsettings.json contains the CosmosDB configuration.",
+                nameof(configSection));
+        }
+
+        var options = new CosmosDbVectorSearchOptions();
+        section.Bind(options);
+
+        return services.AddAutoCompleteCosmosDbProvider<TItem>(opts =>
+        {
+            opts.ConnectionString = options.ConnectionString;
+            opts.DatabaseName = options.DatabaseName;
+            opts.ContainerName = options.ContainerName;
+            opts.EmbeddingDimensions = options.EmbeddingDimensions;
+            opts.DistanceFunction = options.DistanceFunction;
+            opts.IndexBatchSize = options.IndexBatchSize;
+            opts.PartitionKeyPath = options.PartitionKeyPath;
+            opts.VectorIndexType = options.VectorIndexType;
+        });
+    }
+
     /// <summary>
     /// Adds Azure CosmosDB as the vector search provider.
     /// </summary>
@@ -106,6 +164,29 @@ public static class CosmosDbServiceExtensions
                 textSelector,
                 idSelector);
         });
+
+        return services;
+    }
+
+    /// <summary>
+    /// Adds Azure CosmosDB vector search with both provider and indexer using configuration from appsettings.json.
+    /// </summary>
+    /// <typeparam name="TItem">The item type.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration instance.</param>
+    /// <param name="textSelector">Function to extract searchable text from items.</param>
+    /// <param name="idSelector">Optional function to extract unique ID from items.</param>
+    /// <param name="configSection">The configuration section name. Default: "VectorSearch:CosmosDb".</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddAutoCompleteCosmosDb<TItem>(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Func<TItem, string> textSelector,
+        Func<TItem, string>? idSelector = null,
+        string configSection = "VectorSearch:CosmosDb")
+    {
+        services.AddAutoCompleteCosmosDbProvider<TItem>(configuration, configSection);
+        services.AddAutoCompleteCosmosDbIndexer(textSelector, idSelector);
 
         return services;
     }

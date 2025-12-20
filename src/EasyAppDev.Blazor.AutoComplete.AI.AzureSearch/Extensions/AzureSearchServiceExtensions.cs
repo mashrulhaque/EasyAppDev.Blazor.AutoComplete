@@ -1,6 +1,7 @@
 using Azure;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.AI;
 using Microsoft.SemanticKernel.Connectors.AzureAISearch;
@@ -14,6 +15,66 @@ namespace EasyAppDev.Blazor.AutoComplete.AI.AzureSearch.Extensions;
 /// </summary>
 public static class AzureSearchServiceExtensions
 {
+    /// <summary>
+    /// Adds Azure AI Search as the vector search provider using configuration from appsettings.json.
+    /// </summary>
+    /// <typeparam name="TItem">The item type to search.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration instance.</param>
+    /// <param name="configSection">The configuration section name. Default: "VectorSearch:AzureSearch".</param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when services or configuration is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when configuration section is missing or options are invalid.</exception>
+    /// <example>
+    /// appsettings.json:
+    /// {
+    ///   "VectorSearch": {
+    ///     "AzureSearch": {
+    ///       "Endpoint": "https://my-search.search.windows.net",
+    ///       "ApiKey": "your-api-key",
+    ///       "IndexName": "products",
+    ///       "EmbeddingDimensions": 1536,
+    ///       "EnableHybridSearch": true
+    ///     }
+    ///   }
+    /// }
+    /// </example>
+    public static IServiceCollection AddAutoCompleteAzureSearchProvider<TItem>(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string configSection = "VectorSearch:AzureSearch")
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var section = configuration.GetSection(configSection);
+        if (!section.Exists())
+        {
+            throw new ArgumentException(
+                $"Configuration section '{configSection}' not found. " +
+                "Ensure your appsettings.json contains the Azure AI Search configuration.",
+                nameof(configSection));
+        }
+
+        var options = new AzureSearchVectorSearchOptions();
+        section.Bind(options);
+
+        return services.AddAutoCompleteAzureSearchProvider<TItem>(opts =>
+        {
+            opts.Endpoint = options.Endpoint;
+            opts.ApiKey = options.ApiKey;
+            opts.IndexName = options.IndexName;
+            opts.EmbeddingDimensions = options.EmbeddingDimensions;
+            opts.DistanceFunction = options.DistanceFunction;
+            opts.EnableHybridSearch = options.EnableHybridSearch;
+            opts.EnableSemanticRanking = options.EnableSemanticRanking;
+            opts.SemanticConfigurationName = options.SemanticConfigurationName;
+            opts.VectorFieldName = options.VectorFieldName;
+            opts.ContentFieldName = options.ContentFieldName;
+            opts.IndexBatchSize = options.IndexBatchSize;
+        });
+    }
+
     /// <summary>
     /// Adds Azure AI Search as the vector search provider.
     /// </summary>
@@ -99,6 +160,31 @@ public static class AzureSearchServiceExtensions
                 titleSelector,
                 idSelector);
         });
+
+        return services;
+    }
+
+    /// <summary>
+    /// Adds Azure AI Search vector search with both provider and indexer using configuration from appsettings.json.
+    /// </summary>
+    /// <typeparam name="TItem">The item type.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration instance.</param>
+    /// <param name="textSelector">Function to extract searchable text from items.</param>
+    /// <param name="titleSelector">Optional function to extract title from items.</param>
+    /// <param name="idSelector">Optional function to extract unique ID from items.</param>
+    /// <param name="configSection">The configuration section name. Default: "VectorSearch:AzureSearch".</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddAutoCompleteAzureSearch<TItem>(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Func<TItem, string> textSelector,
+        Func<TItem, string>? titleSelector = null,
+        Func<TItem, string>? idSelector = null,
+        string configSection = "VectorSearch:AzureSearch")
+    {
+        services.AddAutoCompleteAzureSearchProvider<TItem>(configuration, configSection);
+        services.AddAutoCompleteAzureSearchIndexer(textSelector, titleSelector, idSelector);
 
         return services;
     }

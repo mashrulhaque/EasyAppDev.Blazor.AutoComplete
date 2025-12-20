@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.AI;
 using Microsoft.SemanticKernel.Connectors.PgVector;
@@ -12,6 +13,62 @@ namespace EasyAppDev.Blazor.AutoComplete.AI.PostgreSql.Extensions;
 /// </summary>
 public static class PostgresServiceExtensions
 {
+    /// <summary>
+    /// Adds PostgreSQL (pgvector) as the vector search provider using configuration from appsettings.json.
+    /// </summary>
+    /// <typeparam name="TItem">The item type to search.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration instance.</param>
+    /// <param name="configSection">The configuration section name. Default: "VectorSearch:PostgreSQL".</param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when services or configuration is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when configuration section is missing or options are invalid.</exception>
+    /// <example>
+    /// appsettings.json:
+    /// {
+    ///   "VectorSearch": {
+    ///     "PostgreSQL": {
+    ///       "ConnectionString": "Host=localhost;Database=myapp;Username=user;Password=pass",
+    ///       "CollectionName": "products",
+    ///       "EmbeddingDimensions": 1536
+    ///     }
+    ///   }
+    /// }
+    /// </example>
+    public static IServiceCollection AddAutoCompletePostgresProvider<TItem>(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string configSection = "VectorSearch:PostgreSQL")
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var section = configuration.GetSection(configSection);
+        if (!section.Exists())
+        {
+            throw new ArgumentException(
+                $"Configuration section '{configSection}' not found. " +
+                "Ensure your appsettings.json contains the PostgreSQL vector search configuration.",
+                nameof(configSection));
+        }
+
+        var options = new PostgresVectorSearchOptions();
+        section.Bind(options);
+
+        return services.AddAutoCompletePostgresProvider<TItem>(opts =>
+        {
+            opts.ConnectionString = options.ConnectionString;
+            opts.CollectionName = options.CollectionName;
+            opts.EmbeddingDimensions = options.EmbeddingDimensions;
+            opts.DistanceFunction = options.DistanceFunction;
+            opts.Schema = options.Schema;
+            opts.IndexBatchSize = options.IndexBatchSize;
+            opts.CreateHnswIndex = options.CreateHnswIndex;
+            opts.HnswM = options.HnswM;
+            opts.HnswEfConstruction = options.HnswEfConstruction;
+        });
+    }
+
     /// <summary>
     /// Adds PostgreSQL (pgvector) as the vector search provider.
     /// </summary>
@@ -88,6 +145,29 @@ public static class PostgresServiceExtensions
                 textSelector,
                 idSelector);
         });
+
+        return services;
+    }
+
+    /// <summary>
+    /// Adds PostgreSQL vector search with both provider and indexer using configuration from appsettings.json.
+    /// </summary>
+    /// <typeparam name="TItem">The item type.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration instance.</param>
+    /// <param name="textSelector">Function to extract searchable text from items.</param>
+    /// <param name="idSelector">Optional function to extract unique ID from items.</param>
+    /// <param name="configSection">The configuration section name. Default: "VectorSearch:PostgreSQL".</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddAutoCompletePostgres<TItem>(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Func<TItem, string> textSelector,
+        Func<TItem, string>? idSelector = null,
+        string configSection = "VectorSearch:PostgreSQL")
+    {
+        services.AddAutoCompletePostgresProvider<TItem>(configuration, configSection);
+        services.AddAutoCompletePostgresIndexer(textSelector, idSelector);
 
         return services;
     }

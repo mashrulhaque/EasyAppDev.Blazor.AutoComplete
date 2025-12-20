@@ -480,21 +480,47 @@ For production deployments with persistent storage and scalable semantic search,
 dotnet add package EasyAppDev.Blazor.AutoComplete.AI.PostgreSql
 ```
 
+**Using appsettings.json (Recommended):**
+
+```json
+{
+  "VectorSearch": {
+    "PostgreSQL": {
+      "ConnectionString": "Host=localhost;Database=myapp;Username=user;Password=pass",
+      "CollectionName": "products",
+      "EmbeddingDimensions": 1536
+    }
+  },
+  "OpenAI": {
+    "ApiKey": "sk-..."
+  }
+}
+```
+
 ```csharp
 using EasyAppDev.Blazor.AutoComplete.AI.PostgreSql.Extensions;
 
-// Configure services
+builder.Services.AddAutoCompletePostgres<Product>(
+    builder.Configuration,
+    textSelector: p => $"{p.Name} {p.Description} {p.Category}",
+    idSelector: p => p.Id.ToString());
+
+builder.Services.AddAutoCompleteVectorSearch<Product>(builder.Configuration);
+```
+
+**Using explicit configuration:**
+
+```csharp
 builder.Services.AddAutoCompletePostgres<Product>(
     configureOptions: options =>
     {
         options.ConnectionString = "Host=localhost;Database=myapp;Username=user;Password=pass";
         options.CollectionName = "products";
-        options.EmbeddingDimensions = 1536;  // text-embedding-3-small
+        options.EmbeddingDimensions = 1536;
     },
     textSelector: p => $"{p.Name} {p.Description} {p.Category}",
     idSelector: p => p.Id.ToString());
 
-// Add OpenAI embeddings and vector search data source
 builder.Services.AddAutoCompleteVectorSearch<Product>(
     openAiApiKey: "sk-...",
     configureOptions: options =>
@@ -518,16 +544,48 @@ Component usage is unchanged:
 dotnet add package EasyAppDev.Blazor.AutoComplete.AI.AzureSearch
 ```
 
+**Using appsettings.json (Recommended):**
+
+```json
+{
+  "VectorSearch": {
+    "AzureSearch": {
+      "Endpoint": "https://my-search.search.windows.net",
+      "ApiKey": "your-search-api-key",
+      "IndexName": "products",
+      "EmbeddingDimensions": 1536,
+      "EnableHybridSearch": true
+    }
+  },
+  "AzureOpenAI": {
+    "Endpoint": "https://my-openai.openai.azure.com/",
+    "ApiKey": "your-openai-key",
+    "DeploymentName": "text-embedding-ada-002"
+  }
+}
+```
+
 ```csharp
 using EasyAppDev.Blazor.AutoComplete.AI.AzureSearch.Extensions;
 
+builder.Services.AddAutoCompleteAzureSearch<Product>(
+    builder.Configuration,
+    textSelector: p => $"{p.Name} {p.Description}",
+    idSelector: p => p.Id.ToString());
+
+builder.Services.AddAutoCompleteVectorSearchWithAzure<Product>(builder.Configuration);
+```
+
+**Using explicit configuration:**
+
+```csharp
 builder.Services.AddAutoCompleteAzureSearch<Product>(
     configureOptions: options =>
     {
         options.Endpoint = "https://my-search.search.windows.net";
         options.ApiKey = "your-api-key";
         options.IndexName = "products";
-        options.EnableHybridSearch = true;  // Vector + keyword search
+        options.EnableHybridSearch = true;
     },
     textSelector: p => $"{p.Name} {p.Description}",
     idSelector: p => p.Id.ToString());
@@ -540,6 +598,73 @@ builder.Services.AddAutoCompleteVectorSearchWithAzure<Product>(
     {
         options.EnableHybridSearch = true;
     });
+```
+
+### Other Vector Providers
+
+All vector providers support configuration via appsettings.json:
+
+**Pinecone:**
+```json
+{
+  "VectorSearch": {
+    "Pinecone": {
+      "ApiKey": "your-pinecone-api-key",
+      "IndexName": "products",
+      "Namespace": "default",
+      "EmbeddingDimensions": 1536
+    }
+  }
+}
+```
+
+```csharp
+builder.Services.AddAutoCompletePinecone<Product>(
+    builder.Configuration,
+    textSelector: p => p.Name);
+```
+
+**Qdrant:**
+```json
+{
+  "VectorSearch": {
+    "Qdrant": {
+      "Host": "localhost",
+      "Port": 6334,
+      "Https": false,
+      "ApiKey": "your-api-key-for-cloud",
+      "CollectionName": "products",
+      "EmbeddingDimensions": 1536
+    }
+  }
+}
+```
+
+```csharp
+builder.Services.AddAutoCompleteQdrant<Product>(
+    builder.Configuration,
+    textSelector: p => p.Name);
+```
+
+**Azure CosmosDB:**
+```json
+{
+  "VectorSearch": {
+    "CosmosDb": {
+      "ConnectionString": "AccountEndpoint=https://myaccount.documents.azure.com:443/;AccountKey=...",
+      "DatabaseName": "myapp",
+      "ContainerName": "products",
+      "EmbeddingDimensions": 1536,
+      "VectorIndexType": "quantizedFlat"
+    }
+  }
+}
+```
+
+```csharp
+builder.Services.AddAutoCompleteCosmosDb<Product>(
+    builder.Configuration,
+    textSelector: p => p.Name);
 ```
 
 ### When to Use Vector Providers

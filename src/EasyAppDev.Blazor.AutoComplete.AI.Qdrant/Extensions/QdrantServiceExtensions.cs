@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.AI;
 using Microsoft.SemanticKernel.Connectors.Qdrant;
@@ -12,6 +13,65 @@ namespace EasyAppDev.Blazor.AutoComplete.AI.Qdrant.Extensions;
 /// </summary>
 public static class QdrantServiceExtensions
 {
+    /// <summary>
+    /// Adds Qdrant as the vector search provider using configuration from appsettings.json.
+    /// </summary>
+    /// <typeparam name="TItem">The item type to search.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration instance.</param>
+    /// <param name="configSection">The configuration section name. Default: "VectorSearch:Qdrant".</param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when services or configuration is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when configuration section is missing or options are invalid.</exception>
+    /// <example>
+    /// appsettings.json:
+    /// {
+    ///   "VectorSearch": {
+    ///     "Qdrant": {
+    ///       "Host": "localhost",
+    ///       "Port": 6334,
+    ///       "Https": false,
+    ///       "ApiKey": "your-api-key-for-cloud",
+    ///       "CollectionName": "products",
+    ///       "EmbeddingDimensions": 1536
+    ///     }
+    ///   }
+    /// }
+    /// </example>
+    public static IServiceCollection AddAutoCompleteQdrantProvider<TItem>(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string configSection = "VectorSearch:Qdrant")
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var section = configuration.GetSection(configSection);
+        if (!section.Exists())
+        {
+            throw new ArgumentException(
+                $"Configuration section '{configSection}' not found. " +
+                "Ensure your appsettings.json contains the Qdrant configuration.",
+                nameof(configSection));
+        }
+
+        var options = new QdrantVectorSearchOptions();
+        section.Bind(options);
+
+        return services.AddAutoCompleteQdrantProvider<TItem>(opts =>
+        {
+            opts.Host = options.Host;
+            opts.Port = options.Port;
+            opts.Https = options.Https;
+            opts.ApiKey = options.ApiKey;
+            opts.CollectionName = options.CollectionName;
+            opts.EmbeddingDimensions = options.EmbeddingDimensions;
+            opts.DistanceFunction = options.DistanceFunction;
+            opts.IndexBatchSize = options.IndexBatchSize;
+            opts.CreateHnswIndex = options.CreateHnswIndex;
+        });
+    }
+
     /// <summary>
     /// Adds Qdrant as the vector search provider.
     /// </summary>
@@ -90,6 +150,29 @@ public static class QdrantServiceExtensions
                 textSelector,
                 idSelector);
         });
+
+        return services;
+    }
+
+    /// <summary>
+    /// Adds Qdrant vector search with both provider and indexer using configuration from appsettings.json.
+    /// </summary>
+    /// <typeparam name="TItem">The item type.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration instance.</param>
+    /// <param name="textSelector">Function to extract searchable text from items.</param>
+    /// <param name="idSelector">Optional function to extract unique ID (GUID) from items.</param>
+    /// <param name="configSection">The configuration section name. Default: "VectorSearch:Qdrant".</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddAutoCompleteQdrant<TItem>(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Func<TItem, string> textSelector,
+        Func<TItem, Guid>? idSelector = null,
+        string configSection = "VectorSearch:Qdrant")
+    {
+        services.AddAutoCompleteQdrantProvider<TItem>(configuration, configSection);
+        services.AddAutoCompleteQdrantIndexer(textSelector, idSelector);
 
         return services;
     }

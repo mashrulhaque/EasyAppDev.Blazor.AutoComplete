@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.AI;
 using Microsoft.SemanticKernel.Connectors.Pinecone;
@@ -12,6 +13,60 @@ namespace EasyAppDev.Blazor.AutoComplete.AI.Pinecone.Extensions;
 /// </summary>
 public static class PineconeServiceExtensions
 {
+    /// <summary>
+    /// Adds Pinecone as the vector search provider using configuration from appsettings.json.
+    /// </summary>
+    /// <typeparam name="TItem">The item type to search.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration instance.</param>
+    /// <param name="configSection">The configuration section name. Default: "VectorSearch:Pinecone".</param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when services or configuration is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when configuration section is missing or options are invalid.</exception>
+    /// <example>
+    /// appsettings.json:
+    /// {
+    ///   "VectorSearch": {
+    ///     "Pinecone": {
+    ///       "ApiKey": "your-pinecone-api-key",
+    ///       "IndexName": "products",
+    ///       "Namespace": "default",
+    ///       "EmbeddingDimensions": 1536
+    ///     }
+    ///   }
+    /// }
+    /// </example>
+    public static IServiceCollection AddAutoCompletePineconeProvider<TItem>(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string configSection = "VectorSearch:Pinecone")
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var section = configuration.GetSection(configSection);
+        if (!section.Exists())
+        {
+            throw new ArgumentException(
+                $"Configuration section '{configSection}' not found. " +
+                "Ensure your appsettings.json contains the Pinecone configuration.",
+                nameof(configSection));
+        }
+
+        var options = new PineconeVectorSearchOptions();
+        section.Bind(options);
+
+        return services.AddAutoCompletePineconeProvider<TItem>(opts =>
+        {
+            opts.ApiKey = options.ApiKey;
+            opts.IndexName = options.IndexName;
+            opts.Namespace = options.Namespace;
+            opts.EmbeddingDimensions = options.EmbeddingDimensions;
+            opts.DistanceFunction = options.DistanceFunction;
+            opts.IndexBatchSize = options.IndexBatchSize;
+        });
+    }
+
     /// <summary>
     /// Adds Pinecone as the vector search provider.
     /// </summary>
@@ -86,6 +141,29 @@ public static class PineconeServiceExtensions
                 textSelector,
                 idSelector);
         });
+
+        return services;
+    }
+
+    /// <summary>
+    /// Adds Pinecone vector search with both provider and indexer using configuration from appsettings.json.
+    /// </summary>
+    /// <typeparam name="TItem">The item type.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration instance.</param>
+    /// <param name="textSelector">Function to extract searchable text from items.</param>
+    /// <param name="idSelector">Optional function to extract unique ID from items.</param>
+    /// <param name="configSection">The configuration section name. Default: "VectorSearch:Pinecone".</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddAutoCompletePinecone<TItem>(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Func<TItem, string> textSelector,
+        Func<TItem, string>? idSelector = null,
+        string configSection = "VectorSearch:Pinecone")
+    {
+        services.AddAutoCompletePineconeProvider<TItem>(configuration, configSection);
+        services.AddAutoCompletePineconeIndexer(textSelector, idSelector);
 
         return services;
     }

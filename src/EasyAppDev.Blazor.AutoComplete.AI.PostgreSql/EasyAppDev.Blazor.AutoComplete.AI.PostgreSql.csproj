@@ -27,6 +27,8 @@
     <!-- Semantic Kernel PostgreSQL connector (prerelease) - renamed from Connectors.Postgres -->
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.PgVector" Version="*-*" />
     <PackageReference Include="Npgsql" Version="8.*" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.0" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0" Condition="'$(TargetFramework)' == 'net9.0'" />
   </ItemGroup>
 
 </Project>
