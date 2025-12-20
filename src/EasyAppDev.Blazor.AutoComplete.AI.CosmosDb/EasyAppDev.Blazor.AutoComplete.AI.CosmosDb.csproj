@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Package metadata -->
+    <PackageId>EasyAppDev.Blazor.AutoComplete.AI.CosmosDb</PackageId>
+    <Description>Azure CosmosDB provider for EasyAppDev.Blazor.AutoComplete.AI semantic search. Provides multi-model database with DiskANN vector search for production-scale autocomplete scenarios with global distribution.</Description>
+    <PackageTags>blazor;autocomplete;ai;cosmosdb;azure;vector-search;semantic-search;diskann</PackageTags>
+
+    <!-- AOT/Trimming - Note: Semantic Kernel connectors are not AOT compatible -->
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>false</IsAotCompatible>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <!-- Suppress AOT warnings from upstream Semantic Kernel connectors -->
+    <NoWarn>$(NoWarn);IL2026;IL3050</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EasyAppDev.Blazor.AutoComplete.AI\EasyAppDev.Blazor.AutoComplete.AI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Semantic Kernel CosmosDB NoSQL connector (prerelease) -->
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.CosmosNoSql" Version="*-*" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.*" />
+  </ItemGroup>
+
+</Project>

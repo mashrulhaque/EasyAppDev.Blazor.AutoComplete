@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Package metadata -->
+    <PackageId>EasyAppDev.Blazor.AutoComplete.AI.PostgreSql</PackageId>
+    <Description>PostgreSQL/pgvector provider for EasyAppDev.Blazor.AutoComplete.AI semantic search. Provides persistent vector storage with HNSW indexing for production-scale autocomplete scenarios.</Description>
+    <PackageTags>blazor;autocomplete;ai;postgresql;pgvector;vector-search;semantic-search;hnsw</PackageTags>
+
+    <!-- AOT/Trimming - Note: Semantic Kernel connectors are not AOT compatible -->
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>false</IsAotCompatible>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <!-- Suppress AOT warnings from upstream Semantic Kernel connectors -->
+    <NoWarn>$(NoWarn);IL2026;IL3050</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EasyAppDev.Blazor.AutoComplete.AI\EasyAppDev.Blazor.AutoComplete.AI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Semantic Kernel PostgreSQL connector (prerelease) - renamed from Connectors.Postgres -->
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.PgVector" Version="*-*" />
+    <PackageReference Include="Npgsql" Version="8.*" />
+  </ItemGroup>
+
+</Project>

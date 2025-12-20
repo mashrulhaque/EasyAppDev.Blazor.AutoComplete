@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Package metadata -->
+    <PackageId>EasyAppDev.Blazor.AutoComplete.AI.Qdrant</PackageId>
+    <Description>Qdrant provider for EasyAppDev.Blazor.AutoComplete.AI semantic search. Provides open-source vector storage with HNSW indexing for production-scale autocomplete scenarios. Supports self-hosted and cloud deployments.</Description>
+    <PackageTags>blazor;autocomplete;ai;qdrant;vector-search;semantic-search;open-source;hnsw</PackageTags>
+
+    <!-- AOT/Trimming - Note: Semantic Kernel connectors are not AOT compatible -->
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>false</IsAotCompatible>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <!-- Suppress AOT warnings from upstream Semantic Kernel connectors -->
+    <NoWarn>$(NoWarn);IL2026;IL3050</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EasyAppDev.Blazor.AutoComplete.AI\EasyAppDev.Blazor.AutoComplete.AI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Semantic Kernel Qdrant connector (prerelease) -->
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="*-*" />
+  </ItemGroup>
+
+</Project>

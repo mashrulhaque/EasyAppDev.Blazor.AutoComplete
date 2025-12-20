@@ -361,7 +361,10 @@ var options = new ODataOptions
 | `AdditionalFilter` | `string?` | `null` | Static filter ANDed with search |
 | `CaseInsensitive` | `bool` | `true` | Use tolower() wrapper |
 | `MinSearchLength` | `int` | `1` | Min chars before API call |
+| `TimeoutSeconds` | `int` | `30` | HTTP request timeout |
 | `CustomHeaders` | `Dictionary<string,string>?` | `null` | HTTP headers (e.g., Authorization) |
+| `ResultsPropertyName` | `string` | `"value"` | JSON property containing results |
+| `IncludeCount` | `bool` | `false` | Include $count in response |
 
 ### Fluent Builder
 
@@ -444,17 +447,143 @@ Configuration in `appsettings.json`:
 
 ### AI Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `SimilarityThreshold` | `0.15` | Minimum cosine similarity (0-1) for results |
-| `MinSearchLength` | `3` | Characters before semantic search triggers |
-| `DebounceMs` | `500` | Delay before API call |
-| `ItemCacheDuration` | `1 hour` | Embedding cache TTL for items |
-| `QueryCacheDuration` | `15 min` | Embedding cache TTL for queries |
-| `MaxItemCacheSize` | `10,000` | Maximum cached item embeddings |
-| `MaxQueryCacheSize` | `1,000` | Maximum cached query embeddings |
-| `PreWarmCache` | `false` | Generate all embeddings on init |
-| `ShowCacheStatus` | `true` | Display cache statistics |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `SimilarityThreshold` | `float` | `0.15` | Minimum cosine similarity (0-1) for results |
+| `MinSearchLength` | `int` | `3` | Characters before semantic search triggers |
+| `DebounceMs` | `int` | `500` | Delay before API call |
+| `MaxResults` | `int?` | `null` | Maximum results (null = all matching) |
+| `ItemCacheDuration` | `TimeSpan` | `1 hour` | Embedding cache TTL for items |
+| `QueryCacheDuration` | `TimeSpan` | `15 min` | Embedding cache TTL for queries |
+| `MaxItemCacheSize` | `int` | `10,000` | Maximum cached item embeddings |
+| `MaxQueryCacheSize` | `int` | `1,000` | Maximum cached query embeddings |
+| `PreWarmCache` | `bool` | `false` | Generate all embeddings on init |
+| `ShowCacheStatus` | `bool` | `true` | Display cache statistics |
+
+## Vector Database Providers
+
+For production deployments with persistent storage and scalable semantic search, use external vector database providers. These eliminate the need to regenerate embeddings on restart and support millions of items.
+
+### Supported Providers
+
+| Provider | Package | Features |
+|----------|---------|----------|
+| PostgreSQL (pgvector) | `EasyAppDev.Blazor.AutoComplete.AI.PostgreSql` | Self-hosted, 6 distance functions (Cosine, L2, DotProduct, Manhattan, Hamming, Jaccard), HNSW index |
+| Azure AI Search | `EasyAppDev.Blazor.AutoComplete.AI.AzureSearch` | Hybrid search (vector + keyword), semantic ranking, managed service |
+| Pinecone | `EasyAppDev.Blazor.AutoComplete.AI.Pinecone` | Serverless, namespaces, automatic scaling |
+| Qdrant | `EasyAppDev.Blazor.AutoComplete.AI.Qdrant` | Open-source, self-hosted, advanced filtering |
+| Azure CosmosDB | `EasyAppDev.Blazor.AutoComplete.AI.CosmosDb` | Multi-model, global distribution, integrated NoSQL |
+
+### Quick Start (PostgreSQL)
+
+```bash
+dotnet add package EasyAppDev.Blazor.AutoComplete.AI.PostgreSql
+```
+
+```csharp
+using EasyAppDev.Blazor.AutoComplete.AI.PostgreSql.Extensions;
+
+// Configure services
+builder.Services.AddAutoCompletePostgres<Product>(
+    configureOptions: options =>
+    {
+        options.ConnectionString = "Host=localhost;Database=myapp;Username=user;Password=pass";
+        options.CollectionName = "products";
+        options.EmbeddingDimensions = 1536;  // text-embedding-3-small
+    },
+    textSelector: p => $"{p.Name} {p.Description} {p.Category}",
+    idSelector: p => p.Id.ToString());
+
+// Add OpenAI embeddings and vector search data source
+builder.Services.AddAutoCompleteVectorSearch<Product>(
+    openAiApiKey: "sk-...",
+    configureOptions: options =>
+    {
+        options.MaxResults = 20;
+        options.MinSimilarityScore = 0.15f;
+    });
+```
+
+Component usage is unchanged:
+
+```razor
+<SemanticAutoComplete TItem="Product"
+                      TextField="@(p => p.Name)"
+                      @bind-Value="selectedProduct" />
+```
+
+### Quick Start (Azure AI Search)
+
+```bash
+dotnet add package EasyAppDev.Blazor.AutoComplete.AI.AzureSearch
+```
+
+```csharp
+using EasyAppDev.Blazor.AutoComplete.AI.AzureSearch.Extensions;
+
+builder.Services.AddAutoCompleteAzureSearch<Product>(
+    configureOptions: options =>
+    {
+        options.Endpoint = "https://my-search.search.windows.net";
+        options.ApiKey = "your-api-key";
+        options.IndexName = "products";
+        options.EnableHybridSearch = true;  // Vector + keyword search
+    },
+    textSelector: p => $"{p.Name} {p.Description}",
+    idSelector: p => p.Id.ToString());
+
+builder.Services.AddAutoCompleteVectorSearchWithAzure<Product>(
+    endpoint: "https://my-openai.openai.azure.com/",
+    apiKey: "your-openai-key",
+    deploymentName: "text-embedding-ada-002",
+    configureOptions: options =>
+    {
+        options.EnableHybridSearch = true;
+    });
+```
+
+### When to Use Vector Providers
+
+| Scenario | Recommendation |
+|----------|----------------|
+| Development/Prototyping | Use in-memory `SemanticSearchDataSource` |
+| Small datasets (< 10K items) | Either approach works |
+| Production (> 10K items) | Use vector provider |
+| Need persistence across restarts | Use vector provider |
+| Multi-instance deployment | Use vector provider (shared database) |
+| Need hybrid search (vector + keyword) | Azure AI Search or CosmosDB |
+
+### Indexing Data
+
+Before searching, index your data:
+
+```csharp
+// Inject the indexer
+public class ProductService
+{
+    private readonly IVectorIndexer<Product> _indexer;
+
+    public async Task IndexProductsAsync(IEnumerable<Product> products)
+    {
+        // Ensure collection/index exists
+        await _indexer.EnsureCollectionExistsAsync();
+
+        // Index all items (with progress reporting)
+        _indexer.ProgressChanged += (s, e) =>
+            Console.WriteLine($"Indexed {e.ProcessedItems}/{e.TotalItems}");
+
+        await _indexer.IndexAsync(products);
+    }
+
+    public async Task IndexSingleProductAsync(Product product)
+    {
+        // Upsert single item
+        await _indexer.IndexAsync(product);
+    }
+}
+```
+
+See the [Migration Guide](docs/migration-guide.md) for detailed instructions on migrating from in-memory search to vector providers.
 
 ## API Reference
 
@@ -463,16 +592,16 @@ Configuration in `appsettings.json`:
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `Items` | `IEnumerable<TItem>?` | `null` | Collection of items |
-| `DataSource` | `IAutoCompleteDataSource<TItem>?` | `null` | Async data source |
+| `DataSource` | `IAutoCompleteDataSource<TItem>?` | `null` | Async data source (takes precedence over Items) |
 | `Value` | `TItem?` | `null` | Selected value (two-way) |
 | `ValueChanged` | `EventCallback<TItem?>` | | Selection change event |
 | `TextField` | `Expression<Func<TItem, string>>?` | `null` | Display text property |
 | `SearchFields` | `Expression<Func<TItem, string[]>>?` | `null` | Multi-field search |
 | `Placeholder` | `string?` | `null` | Input placeholder |
 | `MinSearchLength` | `int` | `1` | Min chars before search |
+| `MaxSearchLength` | `int` | `500` | Max input length (security, max 2000) |
 | `MaxDisplayedItems` | `int` | `100` | Max items shown |
 | `DebounceMs` | `int` | `300` | Debounce delay (ms) |
-| `MaxSearchLength` | `int` | `500` | Max input length (security) |
 | `AllowClear` | `bool` | `true` | Show clear button |
 | `Disabled` | `bool` | `false` | Disable component |
 | `CloseOnSelect` | `bool` | `true` | Close on selection |
@@ -500,9 +629,9 @@ Configuration in `appsettings.json`:
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `Theme` | `Theme` | `Auto` | Light/Dark/Auto |
-| `ThemePreset` | `ThemePreset` | `None` | Design system |
+| `ThemePreset` | `ThemePreset` | `None` | Design system (Material, Fluent, Modern, Bootstrap) |
 | `BootstrapTheme` | `BootstrapTheme` | `Default` | Bootstrap color variant |
-| `Size` | `ComponentSize` | `Default` | Component size |
+| `Size` | `ComponentSize` | `Default` | Component size (Compact, Default, Large) |
 | `EnableThemeTransitions` | `bool` | `true` | Smooth transitions |
 | `RightToLeft` | `bool` | `false` | RTL text direction |
 | `ThemeOverrides` | `ThemeOptions?` | `null` | Structured overrides |

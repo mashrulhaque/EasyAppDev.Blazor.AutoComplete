@@ -1,0 +1,84 @@
+@page "/"
+@using EasyAppDev.Blazor.AutoComplete.AI
+
+<h1>Product Search (Azure AI Search + Hybrid)</h1>
+<p class="text-muted">Search products using hybrid search (vector + keyword). Try queries like "laptop for developers", "cooking appliances", or just "MacBook".</p>
+
+<div class="row">
+    <div class="col-md-6">
+        <SemanticAutoComplete TItem="Product"
+                              TextField="@(p => p.Name)"
+                              SearchFields="@(p => new[] { p.Name, p.Description, p.Category })"
+                              Placeholder="Search with hybrid (vector + keyword)..."
+                              SimilarityThreshold="0.15f"
+                              MinSearchLength="2"
+                              @bind-Value="selectedProduct">
+            <ItemTemplate>
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong>@context.Name</strong>
+                        <div class="text-muted small">@context.Description</div>
+                    </div>
+                    <span class="badge bg-primary">$@context.Price.ToString("N2")</span>
+                </div>
+            </ItemTemplate>
+        </SemanticAutoComplete>
+    </div>
+</div>
+
+@if (selectedProduct is not null)
+{
+    <div class="card mt-4" style="max-width: 400px;">
+        <div class="card-body">
+            <h5 class="card-title">@selectedProduct.Name</h5>
+            <h6 class="card-subtitle mb-2 text-muted">@selectedProduct.Category</h6>
+            <p class="card-text">@selectedProduct.Description</p>
+            <p class="card-text fw-bold text-primary">$@selectedProduct.Price.ToString("N2")</p>
+            <button class="btn btn-outline-secondary btn-sm" @onclick="ClearSelection">Clear</button>
+        </div>
+    </div>
+}
+
+<div class="mt-5">
+    <h4>Hybrid Search Benefits</h4>
+    <ul>
+        <li><strong>Vector Search:</strong> Finds semantically similar results even with different wording</li>
+        <li><strong>Keyword Search:</strong> Exact matches boost relevance for product names/codes</li>
+        <li><strong>Combined Ranking:</strong> Best of both worlds for natural user queries</li>
+    </ul>
+
+    <h4>Example Comparisons</h4>
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Query</th>
+                <th>Vector Finds</th>
+                <th>Keyword Finds</th>
+                <th>Hybrid Result</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>"MacBook"</td>
+                <td>Laptops, computers</td>
+                <td>MacBook Pro (exact)</td>
+                <td>MacBook Pro first, then similar laptops</td>
+            </tr>
+            <tr>
+                <td>"laptop for coding"</td>
+                <td>MacBook, development tools</td>
+                <td>Nothing (no exact match)</td>
+                <td>Developer laptops ranked by relevance</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private Product? selectedProduct;
+
+    private void ClearSelection()
+    {
+        selectedProduct = null;
+    }
+}

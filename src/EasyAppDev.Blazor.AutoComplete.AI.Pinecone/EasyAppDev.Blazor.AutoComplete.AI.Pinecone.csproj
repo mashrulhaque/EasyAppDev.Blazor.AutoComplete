@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Package metadata -->
+    <PackageId>EasyAppDev.Blazor.AutoComplete.AI.Pinecone</PackageId>
+    <Description>Pinecone provider for EasyAppDev.Blazor.AutoComplete.AI semantic search. Provides serverless vector storage with high-performance similarity search for production-scale autocomplete scenarios.</Description>
+    <PackageTags>blazor;autocomplete;ai;pinecone;vector-search;semantic-search;serverless</PackageTags>
+
+    <!-- AOT/Trimming - Note: Semantic Kernel connectors are not AOT compatible -->
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>false</IsAotCompatible>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <!-- Suppress AOT warnings from upstream Semantic Kernel connectors -->
+    <NoWarn>$(NoWarn);IL2026;IL3050</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EasyAppDev.Blazor.AutoComplete.AI\EasyAppDev.Blazor.AutoComplete.AI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Semantic Kernel Pinecone connector (prerelease) -->
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Pinecone" Version="*-*" />
+  </ItemGroup>
+
+</Project>

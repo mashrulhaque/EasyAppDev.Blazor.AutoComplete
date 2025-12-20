@@ -1,0 +1,64 @@
+@page "/"
+@using EasyAppDev.Blazor.AutoComplete.AI
+
+<h1>Product Search (Qdrant)</h1>
+<p class="text-muted">Search products using Qdrant's fast HNSW-based vector search. Try queries like "laptop for software development", "home automation devices", or "books about software engineering".</p>
+
+<div class="row">
+    <div class="col-md-6">
+        <SemanticAutoComplete TItem="Product"
+                              TextField="@(p => p.Name)"
+                              SearchFields="@(p => new[] { p.Name, p.Description, p.Category })"
+                              Placeholder="Search products with Qdrant..."
+                              SimilarityThreshold="0.15f"
+                              MinSearchLength="3"
+                              @bind-Value="selectedProduct">
+            <ItemTemplate>
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong>@context.Name</strong>
+                        <div class="text-muted small">@context.Description</div>
+                    </div>
+                    <span class="badge bg-danger">$@context.Price.ToString("N2")</span>
+                </div>
+            </ItemTemplate>
+        </SemanticAutoComplete>
+    </div>
+</div>
+
+@if (selectedProduct is not null)
+{
+    <div class="card mt-4" style="max-width: 400px;">
+        <div class="card-body">
+            <h5 class="card-title">@selectedProduct.Name</h5>
+            <h6 class="card-subtitle mb-2 text-muted">@selectedProduct.Category</h6>
+            <p class="card-text">@selectedProduct.Description</p>
+            <p class="card-text fw-bold text-danger">$@selectedProduct.Price.ToString("N2")</p>
+            <button class="btn btn-outline-secondary btn-sm" @onclick="ClearSelection">Clear</button>
+        </div>
+    </div>
+}
+
+<div class="mt-5">
+    <h4>Why Qdrant?</h4>
+    <ul>
+        <li><strong>Open Source:</strong> Self-hosted, no vendor lock-in</li>
+        <li><strong>Fast HNSW:</strong> Approximate nearest neighbor search for sub-millisecond queries</li>
+        <li><strong>Filtering:</strong> Combine vector search with payload filtering</li>
+        <li><strong>Scalable:</strong> Distributed mode for billions of vectors</li>
+        <li><strong>Easy Setup:</strong> Single Docker command to get started</li>
+    </ul>
+
+    <h4>Getting Started</h4>
+    <pre><code>docker-compose up -d</code></pre>
+    <p>This starts Qdrant on port 6333 (REST) and 6334 (gRPC).</p>
+</div>
+
+@code {
+    private Product? selectedProduct;
+
+    private void ClearSelection()
+    {
+        selectedProduct = null;
+    }
+}

@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Package metadata -->
+    <PackageId>EasyAppDev.Blazor.AutoComplete.AI.AzureSearch</PackageId>
+    <Description>Azure AI Search provider for EasyAppDev.Blazor.AutoComplete.AI semantic search. Provides cloud-native vector search with hybrid (vector + keyword) search and semantic ranking support.</Description>
+    <PackageTags>blazor;autocomplete;ai;azure;azure-ai-search;cognitive-search;vector-search;semantic-search;hybrid-search</PackageTags>
+
+    <!-- AOT/Trimming - Note: Semantic Kernel connectors are not AOT compatible -->
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>false</IsAotCompatible>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <!-- Suppress AOT warnings from upstream Semantic Kernel connectors -->
+    <NoWarn>$(NoWarn);IL2026;IL3050</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EasyAppDev.Blazor.AutoComplete.AI\EasyAppDev.Blazor.AutoComplete.AI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Semantic Kernel Azure AI Search connector (prerelease) -->
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureAISearch" Version="*-*" />
+    <PackageReference Include="Azure.Search.Documents" Version="11.*" />
+  </ItemGroup>
+
+</Project>

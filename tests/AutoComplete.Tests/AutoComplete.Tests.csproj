@@ -29,6 +29,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\EasyAppDev.Blazor.AutoComplete\EasyAppDev.Blazor.AutoComplete.csproj" />
     <ProjectReference Include="..\..\src\EasyAppDev.Blazor.AutoComplete.AI\EasyAppDev.Blazor.AutoComplete.AI.csproj" />
+    <ProjectReference Include="..\..\src\EasyAppDev.Blazor.AutoComplete.AI.PostgreSql\EasyAppDev.Blazor.AutoComplete.AI.PostgreSql.csproj" />
+    <ProjectReference Include="..\..\src\EasyAppDev.Blazor.AutoComplete.AI.AzureSearch\EasyAppDev.Blazor.AutoComplete.AI.AzureSearch.csproj" />
+    <ProjectReference Include="..\..\src\EasyAppDev.Blazor.AutoComplete.AI.Pinecone\EasyAppDev.Blazor.AutoComplete.AI.Pinecone.csproj" />
+    <ProjectReference Include="..\..\src\EasyAppDev.Blazor.AutoComplete.AI.Qdrant\EasyAppDev.Blazor.AutoComplete.AI.Qdrant.csproj" />
+    <ProjectReference Include="..\..\src\EasyAppDev.Blazor.AutoComplete.AI.CosmosDb\EasyAppDev.Blazor.AutoComplete.AI.CosmosDb.csproj" />
   </ItemGroup>
 
 </Project>
