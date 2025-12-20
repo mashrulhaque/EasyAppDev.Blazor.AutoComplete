@@ -24,8 +24,8 @@
     <PackageTags>blazor;autocomplete;component;ai;semantic-search;performance;trimming;aot;wcag;accessibility;theming;virtualization</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>1.0.5</Version>
-    <PackageReleaseNotes>Version 1.0.5 - Added OData integration package (EasyAppDev.Blazor.AutoComplete.OData) with support for OData v3/v4 endpoints, automatic $filter generation, multi-field search, and all filter strategies (StartsWith, Contains, FuzzyFallback). Enhanced demo pages with interactive search hints.</PackageReleaseNotes>
+    <Version>1.0.6</Version>
+    <PackageReleaseNotes>Version 1.0.6 - Updated all package READMEs with focused documentation for each package. Added READMEs for vector database providers (PostgreSQL, Azure AI Search, Pinecone, Qdrant, CosmosDB).</PackageReleaseNotes>
     <Copyright>Copyright (c) 2025 EasyAppDev</Copyright>
 
     <!-- Documentation -->

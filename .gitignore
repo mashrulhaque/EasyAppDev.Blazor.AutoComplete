@@ -85,7 +85,7 @@ claude-artifacts/
 appsettings.json
 claude_workspace/
 .claude-workspace/
-docs/
+# docs/
 *.nupkg
 *.snupkg
 ############################
@@ -108,3 +108,4 @@ publish-trimmed/
 Thumbs.db
 
 samples/AutoComplete.Playground/appsettings.json
+docs/blog.md

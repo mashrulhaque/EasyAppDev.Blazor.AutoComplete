@@ -19,6 +19,12 @@
     <NoWarn>$(NoWarn);IL2026;IL3050</NoWarn>
   </PropertyGroup>
 
+  <!-- Package README and Icon -->
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\EasyAppDev.Blazor.AutoComplete.AI\EasyAppDev.Blazor.AutoComplete.AI.csproj" />
   </ItemGroup>
