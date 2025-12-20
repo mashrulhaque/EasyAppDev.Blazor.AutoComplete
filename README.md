@@ -12,6 +12,7 @@ A high-performance AutoComplete component for Blazor with AI-powered semantic se
 - **High Performance** - Virtualization for large datasets, debounced input
 - **Native AOT Ready** - Source generators, zero reflection, fully trimmable
 - **AI Semantic Search** - Optional package with OpenAI/Azure embeddings
+- **OData Integration** - Optional package for OData v3/v4 server-side filtering
 - **Accessible** - WCAG 2.1 AA, ARIA 1.2 Combobox pattern, keyboard navigation
 - **Theming** - 4 design presets (Material, Fluent, Modern, Bootstrap), CSS variables
 - **8 Display Modes** - Built-in layouts eliminate template boilerplate
@@ -276,6 +277,120 @@ Or use structured `ThemeOverrides`:
 <AutoComplete InputId="search" AriaLabel="Search products" ... />
 ```
 
+## OData Integration
+
+Optional package for querying OData v3/v4 endpoints with automatic `$filter` generation.
+
+### Installation
+
+```bash
+dotnet add package EasyAppDev.Blazor.AutoComplete.OData
+```
+
+### Usage
+
+```razor
+@using EasyAppDev.Blazor.AutoComplete
+@using EasyAppDev.Blazor.AutoComplete.OData
+@inject HttpClient Http
+
+<AutoComplete TItem="Product"
+              DataSource="@_odataSource"
+              TextField="@(p => p.Name)"
+              @bind-Value="@selectedProduct"
+              Placeholder="Search products..." />
+
+@code {
+    private ODataDataSource<Product> _odataSource = null!;
+    private Product? selectedProduct;
+
+    protected override void OnInitialized()
+    {
+        var options = new ODataOptions
+        {
+            EndpointUrl = "https://api.example.com/odata/products",
+            FilterStrategy = ODataFilterStrategy.StartsWith,
+            Top = 20
+        };
+        _odataSource = new ODataDataSource<Product>(Http, options, "Name");
+    }
+}
+```
+
+### Multi-Field Search
+
+```csharp
+// Search across multiple fields (combined with OR)
+_odataSource = new ODataDataSource<Product>(
+    Http,
+    options,
+    searchFieldNames: new[] { "Name", "Description", "Category" });
+```
+
+Generated OData: `$filter=(startswith(tolower(Name),'search') or startswith(tolower(Description),'search') or startswith(tolower(Category),'search'))`
+
+### OData v3 Support
+
+```csharp
+var options = new ODataOptions
+{
+    EndpointUrl = "https://legacy-api.example.com/odata/products",
+    Version = ODataVersion.V3,  // Use v3 syntax
+    FilterStrategy = ODataFilterStrategy.Contains
+};
+```
+
+### Filter Strategy Mapping
+
+| Strategy | OData v4 | OData v3 |
+|----------|----------|----------|
+| `StartsWith` | `startswith(field,'value')` | Same |
+| `Contains` | `contains(field,'value')` | `substringof('value',field)` |
+| `FuzzyFallback` | `contains()` + client re-rank | `substringof()` + client re-rank |
+
+### OData Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `EndpointUrl` | `string` | Required | OData endpoint URL |
+| `Version` | `ODataVersion` | `V4` | OData protocol version |
+| `FilterStrategy` | `ODataFilterStrategy` | `StartsWith` | Filter type |
+| `Top` | `int` | `100` | Max results ($top) |
+| `Select` | `string[]?` | `null` | Fields to return ($select) |
+| `OrderBy` | `string?` | `null` | Sort order ($orderby) |
+| `AdditionalFilter` | `string?` | `null` | Static filter ANDed with search |
+| `CaseInsensitive` | `bool` | `true` | Use tolower() wrapper |
+| `MinSearchLength` | `int` | `1` | Min chars before API call |
+| `CustomHeaders` | `Dictionary<string,string>?` | `null` | HTTP headers (e.g., Authorization) |
+
+### Fluent Builder
+
+```csharp
+var config = AutoCompleteConfig<Product>.Create()
+    .WithODataSource(Http, "https://api.example.com/odata/products", "Name",
+        opts => {
+            opts.FilterStrategy = ODataFilterStrategy.Contains;
+            opts.Top = 20;
+        })
+    .WithDisplayMode(ItemDisplayMode.TitleWithDescription)
+    .Build();
+```
+
+### Service Registration
+
+```csharp
+// Configuration-based
+builder.Services.AddAutoCompleteOData(builder.Configuration, "ODataSettings");
+
+// Explicit configuration
+builder.Services.AddAutoCompleteOData(
+    "https://api.example.com/odata/products",
+    options => {
+        options.FilterStrategy = ODataFilterStrategy.Contains;
+        options.Top = 50;
+    });
+```
+
 ## AI Semantic Search
 
 Optional package for meaning-based search using embeddings.
@@ -451,6 +566,7 @@ Configuration in `appsettings.json`:
 | `EasyAppDev.Blazor.AutoComplete` | Core component |
 | `EasyAppDev.Blazor.AutoComplete.Generators` | Source generators (build-time only) |
 | `EasyAppDev.Blazor.AutoComplete.AI` | Semantic search with embeddings |
+| `EasyAppDev.Blazor.AutoComplete.OData` | OData v3/v4 server-side filtering |
 
 ## Requirements
 

@@ -86,7 +86,8 @@ appsettings.json
 claude_workspace/
 .claude-workspace/
 docs/
-
+*.nupkg
+*.snupkg
 ############################
 # Test & Build Output
 ############################

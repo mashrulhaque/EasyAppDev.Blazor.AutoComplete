@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <PackageId>EasyAppDev.Blazor.AutoComplete.OData</PackageId>
+    <Description>OData integration for Blazor AutoComplete. Query OData v3/v4 endpoints with automatic $filter generation, multi-field search, and all filter strategies (StartsWith, Contains, Fuzzy). Includes core package.</Description>
+  </PropertyGroup>
+
+  <!-- Package README and Icon -->
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" Condition="Exists('README.md')" />
+    <None Include="..\..\icon.png" Pack="true" PackagePath="\" Link="icon.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- HTTP client for OData requests -->
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" Condition="'$(TargetFramework)' == 'net9.0'" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" Condition="'$(TargetFramework)' == 'net10.0'" />
+
+    <!-- Logging abstractions -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" Condition="'$(TargetFramework)' == 'net9.0'" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" Condition="'$(TargetFramework)' == 'net10.0'" />
+
+    <!-- Configuration abstractions for service registration -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" Condition="'$(TargetFramework)' == 'net9.0'" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" Condition="'$(TargetFramework)' == 'net10.0'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EasyAppDev.Blazor.AutoComplete\EasyAppDev.Blazor.AutoComplete.csproj" />
+  </ItemGroup>
+
+</Project>

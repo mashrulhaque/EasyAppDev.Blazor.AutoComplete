@@ -1,0 +1,294 @@
+@page "/odata-demo"
+@using EasyAppDev.Blazor.AutoComplete
+@using EasyAppDev.Blazor.AutoComplete.OData
+
+<PageTitle>OData Integration Demo</PageTitle>
+
+<h1>OData Integration Demo</h1>
+<p class="lead">
+    Query OData v3/v4 endpoints with automatic $filter generation, multi-field search, and all filter strategies.
+</p>
+
+<div class="alert alert-info">
+    <strong>Note:</strong> This demo shows the OData configuration patterns.
+    To test with a live endpoint, configure your own OData endpoint URL.
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">OData Features</h5>
+            </div>
+            <div class="card-body">
+                <ul>
+                    <li><strong>OData v3 + v4 Support</strong> - Automatic syntax selection</li>
+                    <li><strong>StartsWith Filter</strong> - <code>startswith(field,'value')</code></li>
+                    <li><strong>Contains Filter</strong> - <code>contains(field,'value')</code> (v4) / <code>substringof('value',field)</code> (v3)</li>
+                    <li><strong>Multi-Field Search</strong> - OR-combined filters</li>
+                    <li><strong>Additional Filters</strong> - Static filters ANDed with search</li>
+                    <li><strong>Fuzzy Fallback</strong> - Client-side re-ranking for typo tolerance</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Configuration Options</h5>
+            </div>
+            <div class="card-body">
+                <ul>
+                    <li><code>EndpointUrl</code> - OData endpoint URL</li>
+                    <li><code>Version</code> - V3 or V4 (default: V4)</li>
+                    <li><code>FilterStrategy</code> - StartsWith, Contains, FuzzyFallback</li>
+                    <li><code>Top</code> - Max results ($top)</li>
+                    <li><code>Select</code> - Fields to return ($select)</li>
+                    <li><code>OrderBy</code> - Sort order ($orderby)</li>
+                    <li><code>AdditionalFilter</code> - Extra filter conditions</li>
+                    <li><code>CaseInsensitive</code> - Use tolower() wrapper</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="mt-4">Usage Examples</h2>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Basic OData Search</h5>
+    </div>
+    <div class="card-body">
+        <pre class="bg-light p-3"><code>@@inject HttpClient Http
+
+&lt;AutoComplete TItem="Product"
+              DataSource="@@_odataSource"
+              TextField="@@(p => p.Name)"
+              Placeholder="Search products..." /&gt;
+
+@@code {
+    private ODataDataSource&lt;Product&gt; _odataSource = null!;
+
+    protected override void OnInitialized()
+    {
+        var options = new ODataOptions
+        {
+            EndpointUrl = "https://api.example.com/odata/products",
+            FilterStrategy = ODataFilterStrategy.StartsWith,
+            Top = 20
+        };
+        _odataSource = new ODataDataSource&lt;Product&gt;(Http, options, "Name");
+    }
+}</code></pre>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Multi-Field Search</h5>
+    </div>
+    <div class="card-body">
+        <pre class="bg-light p-3"><code>var options = new ODataOptions
+{
+    EndpointUrl = "https://api.example.com/odata/products",
+    FilterStrategy = ODataFilterStrategy.Contains,
+    Top = 20,
+    Select = new[] { "Id", "Name", "Description", "Category" },
+    OrderBy = "Name"
+};
+
+// Search across multiple fields (combined with OR)
+_odataSource = new ODataDataSource&lt;Product&gt;(
+    Http,
+    options,
+    searchFieldNames: new[] { "Name", "Description", "Category" });</code></pre>
+        <p class="text-muted mt-2 mb-0">
+            <strong>Generated OData:</strong><br/>
+            <code>$filter=(contains(tolower(Name),'search') or contains(tolower(Description),'search') or contains(tolower(Category),'search'))&amp;$top=20&amp;$select=Id,Name,Description,Category&amp;$orderby=Name</code>
+        </p>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">OData v3 Endpoint</h5>
+    </div>
+    <div class="card-body">
+        <pre class="bg-light p-3"><code>var options = new ODataOptions
+{
+    EndpointUrl = "https://legacy-api.example.com/odata/products",
+    Version = ODataVersion.V3,  // Use v3 syntax
+    FilterStrategy = ODataFilterStrategy.Contains
+};
+
+_odataSource = new ODataDataSource&lt;Product&gt;(Http, options, "Name");</code></pre>
+        <p class="text-muted mt-2 mb-0">
+            <strong>Generated OData (v3):</strong><br/>
+            <code>$filter=substringof('search',tolower(Name))</code>
+        </p>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">With Additional Static Filter</h5>
+    </div>
+    <div class="card-body">
+        <pre class="bg-light p-3"><code>var options = new ODataOptions
+{
+    EndpointUrl = "https://api.example.com/odata/products",
+    FilterStrategy = ODataFilterStrategy.StartsWith,
+    AdditionalFilter = "IsActive eq true and CategoryId eq 5"
+};
+
+_odataSource = new ODataDataSource&lt;Product&gt;(Http, options, "Name");</code></pre>
+        <p class="text-muted mt-2 mb-0">
+            <strong>Generated OData:</strong><br/>
+            <code>$filter=(startswith(tolower(Name),'search')) and (IsActive eq true and CategoryId eq 5)</code>
+        </p>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Fluent Builder API</h5>
+    </div>
+    <div class="card-body">
+        <pre class="bg-light p-3"><code>@@using EasyAppDev.Blazor.AutoComplete.Configuration
+
+var config = AutoCompleteConfig&lt;Product&gt;.Create()
+    .WithODataSource(Http, "https://api.example.com/odata/products", "Name",
+        opts => {
+            opts.FilterStrategy = ODataFilterStrategy.Contains;
+            opts.Top = 20;
+            opts.Version = ODataVersion.V4;
+        })
+    .WithDisplayMode(ItemDisplayMode.TitleWithDescription)
+    .WithDescription(p => p.Description)
+    .Build();
+
+&lt;AutoComplete TItem="Product" Config="@@config" /&gt;</code></pre>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Service Registration (DI)</h5>
+    </div>
+    <div class="card-body">
+        <pre class="bg-light p-3"><code>// Program.cs - Configuration-based
+builder.Services.AddAutoCompleteOData(builder.Configuration, "ODataSettings");
+
+// Program.cs - Explicit configuration
+builder.Services.AddAutoCompleteOData(
+    "https://api.example.com/odata/products",
+    options => {
+        options.FilterStrategy = ODataFilterStrategy.Contains;
+        options.Top = 50;
+    });
+
+// appsettings.json
+{
+  "ODataSettings": {
+    "EndpointUrl": "https://api.example.com/odata/products",
+    "FilterStrategy": "Contains",
+    "Top": 50,
+    "Version": "V4"
+  }
+}</code></pre>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Error Handling</h5>
+    </div>
+    <div class="card-body">
+        <pre class="bg-light p-3"><code>var dataSource = new ODataDataSource&lt;Product&gt;(Http, options, "Name");
+
+// Subscribe to errors
+dataSource.ErrorOccurred += (sender, errorMessage) =>
+{
+    Console.WriteLine($"Error: {errorMessage}");
+    // Show user-friendly message, log error, etc.
+};
+
+// Or check after search
+var results = await dataSource.SearchAsync("test");
+if (dataSource.LastError != null)
+{
+    Console.WriteLine($"Last error: {dataSource.LastError}");
+}</code></pre>
+    </div>
+</div>
+
+<h2 class="mt-4">Example OData Endpoint (Minimal API)</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <pre class="bg-light p-3"><code>// Using .NET 10 file-based app format
+#:sdk Microsoft.NET.Sdk.Web
+#:package Microsoft.AspNetCore.OData@@10.0.0-preview.1
+#:property PublishAot=false
+
+using Microsoft.AspNetCore.OData;
+using Microsoft.AspNetCore.OData.Query;
+
+var builder = WebApplication.CreateBuilder();
+builder.Services.AddOData();
+
+var app = builder.Build();
+
+app.MapGet("/", (ODataQueryOptions&lt;TimeZoneInfo&gt; options) =>
+{
+    var query = TimeZoneInfo.GetSystemTimeZones().AsQueryable();
+    return options.ApplyTo(query);
+});
+
+app.Run();
+
+// Example query:
+// curl "http://localhost:5000?$top=10&amp;$select=DisplayName,StandardName&amp;$filter=startswith(StandardName,'Ne')"</code></pre>
+    </div>
+</div>
+
+<h2 class="mt-4">Filter Strategy Comparison</h2>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Strategy</th>
+                <th>OData v4</th>
+                <th>OData v3</th>
+                <th>Use Case</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>StartsWith</code></td>
+                <td><code>startswith(field,'value')</code></td>
+                <td><code>startswith(field,'value')</code></td>
+                <td>Fast prefix matching (e.g., typing ahead)</td>
+            </tr>
+            <tr>
+                <td><code>Contains</code></td>
+                <td><code>contains(field,'value')</code></td>
+                <td><code>substringof('value',field)</code></td>
+                <td>Find anywhere in string</td>
+            </tr>
+            <tr>
+                <td><code>FuzzyFallback</code></td>
+                <td><code>contains()</code> + client re-rank</td>
+                <td><code>substringof()</code> + client re-rank</td>
+                <td>Typo tolerance (server fetches, client ranks)</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-4">
+    <a href="/" class="btn btn-secondary">Back to Home</a>
+</div>
