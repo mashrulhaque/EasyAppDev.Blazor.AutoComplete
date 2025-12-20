@@ -11,6 +11,9 @@
 <div class="playground-section">
     <h2>AI Model Selection</h2>
     <p>Select from popular AI models with detailed information</p>
+    <div class="alert alert-light border mb-3">
+        <strong>Try typing:</strong> <code>GPT</code>, <code>Claude</code>, <code>Llama</code>, <code>Gemini</code>, <code>DALL</code>
+    </div>
 
     <AutoComplete TItem="AIModel"
                   Items="@aiModels"
@@ -50,6 +53,9 @@
 <div class="playground-section">
     <h2>Programming Language & Framework</h2>
     <p>Grouped by category</p>
+    <div class="alert alert-light border mb-3">
+        <strong>Try typing:</strong> <code>Python</code>, <code>React</code>, <code>Blazor</code>, <code>Torch</code> (grouped by Language/Framework)
+    </div>
 
     <AutoComplete TItem="ProgrammingTech"
                   Items="@programmingTechs"
@@ -88,6 +94,9 @@
 <div class="playground-section">
     <h2>AI Tools & Services</h2>
     <p>Search through AI tools and services</p>
+    <div class="alert alert-light border mb-3">
+        <strong>Try typing:</strong> <code>Chat</code>, <code>Copilot</code>, <code>Midjourney</code>, <code>Hugging</code>, <code>Lang</code>
+    </div>
 
     <AutoComplete TItem="AITool"
                   Items="@aiTools"
@@ -121,6 +130,9 @@
 <div class="playground-section">
     <h2>Machine Learning Frameworks</h2>
     <p>Large dataset with virtualization enabled</p>
+    <div class="alert alert-light border mb-3">
+        <strong>Try typing:</strong> <code>Tensor</code>, <code>Keras</code>, <code>XGBoost</code>, <code>ML Framework</code> (100 items with virtualization)
+    </div>
 
     <AutoComplete TItem="MLFramework"
                   Items="@mlFrameworks"
@@ -153,6 +165,9 @@
 <div class="playground-section">
     <h2>AI Prompt Templates</h2>
     <p>Custom template showcase with min search length</p>
+    <div class="alert alert-light border mb-3">
+        <strong>Try typing (min 2 chars):</strong> <code>Code</code>, <code>Bug</code>, <code>Test</code>, <code>SQL</code>, <code>API</code>
+    </div>
 
     <AutoComplete TItem="PromptTemplate"
                   Items="@promptTemplates"

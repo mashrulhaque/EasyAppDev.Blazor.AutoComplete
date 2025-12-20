@@ -18,6 +18,9 @@
             <h2 class="mb-0">Quick Start - Basic Usage</h2>
         </div>
         <div class="card-body">
+            <div class="alert alert-light border mb-3">
+                <strong>Try typing:</strong> <code>Lap</code>, <code>Mouse</code>, <code>Chair</code>, <code>Desk</code>
+            </div>
             <AutoComplete TItem="Product"
                           Items="@products"
                           TextField="@(p => p.Name)"
@@ -40,6 +43,9 @@
         </div>
         <div class="card-body">
             <p class="text-muted">Search across Name, Category, and Description simultaneously</p>
+            <div class="alert alert-light border mb-3">
+                <strong>Try typing:</strong> <code>ergonomic</code> (finds chair & mouse), <code>RGB</code> (finds keyboard), <code>Electronics</code> (category search)
+            </div>
             <AutoComplete TItem="Product"
                           Items="@products"
                           TextField="@(p => p.Name)"
@@ -61,6 +67,9 @@
         </div>
         <div class="card-body">
             <p class="text-muted">Eliminate custom ItemTemplate boilerplate</p>
+            <div class="alert alert-light border mb-3">
+                <strong>Try typing in any box:</strong> <code>Lap</code>, <code>Key</code>, <code>Mon</code>, <code>Pen</code>
+            </div>
 
             <div class="row">
                 <div class="col-md-6 mb-4">
@@ -189,6 +198,9 @@
             <h2 class="mb-0">Grouping</h2>
         </div>
         <div class="card-body">
+            <div class="alert alert-light border mb-3">
+                <strong>Try typing:</strong> <code>a</code> or <code>e</code> (see items grouped by category: Electronics, Furniture, Stationery)
+            </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <h5>Default Headers</h5>
@@ -227,6 +239,9 @@
         </div>
         <div class="card-body">
             <p class="text-muted">Handle large datasets efficiently - generates 5,000 items</p>
+            <div class="alert alert-light border mb-3">
+                <strong>Try typing:</strong> <code>Premium</code>, <code>Standard</code>, <code>Budget</code>, <code>Product 100</code>, <code>Item 500</code>
+            </div>
             <AutoComplete TItem="Product"
                           Items="@largeDataset"
                           TextField="@(p => p.Name)"
@@ -248,6 +263,9 @@
         </div>
         <div class="card-body">
             <p class="text-muted">9 pre-configured Bootstrap 5 color schemes</p>
+            <div class="alert alert-light border mb-3">
+                <strong>Try typing in each:</strong> <code>Lap</code>, <code>Des</code>, <code>Web</code> - notice the different color themes
+            </div>
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label class="form-label"><strong>Primary</strong></label>
@@ -320,6 +338,9 @@
             <h2 class="mb-0">Custom Templates</h2>
         </div>
         <div class="card-body">
+            <div class="alert alert-light border mb-3">
+                <strong>Try typing:</strong> <code>Lap</code>, <code>Chair</code> (see rich template) or <code>xyz</code> (see "No results" template)
+            </div>
             <AutoComplete TItem="Product"
                           Items="@products"
                           TextField="@(p => p.Name)"

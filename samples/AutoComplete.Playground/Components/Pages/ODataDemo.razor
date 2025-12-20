@@ -1,6 +1,10 @@
 @page "/odata-demo"
+@rendermode InteractiveServer
 @using EasyAppDev.Blazor.AutoComplete
 @using EasyAppDev.Blazor.AutoComplete.OData
+@using EasyAppDev.Blazor.AutoComplete.Options
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
 
 <PageTitle>OData Integration Demo</PageTitle>
 
@@ -9,12 +13,62 @@
     Query OData v3/v4 endpoints with automatic $filter generation, multi-field search, and all filter strategies.
 </p>
 
-<div class="alert alert-info">
-    <strong>Note:</strong> This demo shows the OData configuration patterns.
-    To test with a live endpoint, configure your own OData endpoint URL.
-</div>
-
 <div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Live Demo: TimeZone Search</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-2">
+                    Search system time zones using an OData endpoint.
+                </p>
+                <div class="alert alert-light border mb-3">
+                    <strong>Try typing:</strong> <code>Pacific</code>, <code>Eastern</code>, <code>Nepal</code>, <code>New Zealand</code>, <code>Central</code>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Filter Strategy:</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="filterStrategy" id="startsWith" checked="@(_filterStrategy == ODataFilterStrategy.StartsWith)" @onchange="@(() => SetFilterStrategy(ODataFilterStrategy.StartsWith))">
+                        <label class="btn btn-outline-primary" for="startsWith">StartsWith</label>
+
+                        <input type="radio" class="btn-check" name="filterStrategy" id="contains" checked="@(_filterStrategy == ODataFilterStrategy.Contains)" @onchange="@(() => SetFilterStrategy(ODataFilterStrategy.Contains))">
+                        <label class="btn btn-outline-primary" for="contains">Contains</label>
+
+                        <input type="radio" class="btn-check" name="filterStrategy" id="fuzzy" checked="@(_filterStrategy == ODataFilterStrategy.FuzzyFallback)" @onchange="@(() => SetFilterStrategy(ODataFilterStrategy.FuzzyFallback))">
+                        <label class="btn btn-outline-primary" for="fuzzy">Fuzzy</label>
+                    </div>
+                </div>
+
+                <AutoComplete TItem="TimeZoneDto"
+                              DataSource="@_odataSource"
+                              TextField="@(tz => tz.DisplayName)"
+                              ValueChanged="@OnTimeZoneSelected"
+                              Placeholder="Search time zones..."
+                              DisplayMode="ItemDisplayMode.TitleWithDescription"
+                              DescriptionField="@(tz => tz.StandardName)"
+                              MaxDisplayedItems="15"
+                              DebounceMs="300"
+                              Theme="Theme.Auto" />
+
+                @if (!string.IsNullOrEmpty(_selectedTimeZone))
+                {
+                    <div class="alert alert-success mt-3" role="alert">
+                        <strong>Selected:</strong> @_selectedTimeZone
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(_lastError))
+                {
+                    <div class="alert alert-danger mt-3" role="alert">
+                        <strong>Error:</strong> @_lastError
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
     <div class="col-md-6">
         <div class="card mb-4">
             <div class="card-header">
@@ -31,9 +85,7 @@
                 </ul>
             </div>
         </div>
-    </div>
 
-    <div class="col-md-6">
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="mb-0">Configuration Options</h5>
@@ -58,28 +110,32 @@
 
 <div class="card mb-4">
     <div class="card-header">
-        <h5 class="mb-0">Basic OData Search</h5>
+        <h5 class="mb-0">Basic OData Search (This Demo)</h5>
     </div>
     <div class="card-body">
         <pre class="bg-light p-3"><code>@@inject HttpClient Http
 
-&lt;AutoComplete TItem="Product"
+&lt;AutoComplete TItem="TimeZoneDto"
               DataSource="@@_odataSource"
-              TextField="@@(p => p.Name)"
-              Placeholder="Search products..." /&gt;
+              TextField="@@(tz => tz.DisplayName)"
+              DisplayMode="ItemDisplayMode.TitleWithDescription"
+              DescriptionField="@@(tz => tz.StandardName)"
+              Placeholder="Search time zones..." /&gt;
 
 @@code {
-    private ODataDataSource&lt;Product&gt; _odataSource = null!;
+    private ODataDataSource&lt;TimeZoneDto&gt; _odataSource = null!;
 
     protected override void OnInitialized()
     {
         var options = new ODataOptions
         {
-            EndpointUrl = "https://api.example.com/odata/products",
-            FilterStrategy = ODataFilterStrategy.StartsWith,
-            Top = 20
+            EndpointUrl = "/odata/timezones",
+            FilterStrategy = ODataFilterStrategy.Contains,
+            Top = 20,
+            Select = new[] { "Id", "DisplayName", "StandardName", "BaseUtcOffset" }
         };
-        _odataSource = new ODataDataSource&lt;Product&gt;(Http, options, "Name");
+        _odataSource = new ODataDataSource&lt;TimeZoneDto&gt;(
+            Http, options, new[] { "DisplayName", "StandardName" });
     }
 }</code></pre>
     </div>
@@ -153,56 +209,6 @@ _odataSource = new ODataDataSource&lt;Product&gt;(Http, options, "Name");</code>
 
 <div class="card mb-4">
     <div class="card-header">
-        <h5 class="mb-0">Fluent Builder API</h5>
-    </div>
-    <div class="card-body">
-        <pre class="bg-light p-3"><code>@@using EasyAppDev.Blazor.AutoComplete.Configuration
-
-var config = AutoCompleteConfig&lt;Product&gt;.Create()
-    .WithODataSource(Http, "https://api.example.com/odata/products", "Name",
-        opts => {
-            opts.FilterStrategy = ODataFilterStrategy.Contains;
-            opts.Top = 20;
-            opts.Version = ODataVersion.V4;
-        })
-    .WithDisplayMode(ItemDisplayMode.TitleWithDescription)
-    .WithDescription(p => p.Description)
-    .Build();
-
-&lt;AutoComplete TItem="Product" Config="@@config" /&gt;</code></pre>
-    </div>
-</div>
-
-<div class="card mb-4">
-    <div class="card-header">
-        <h5 class="mb-0">Service Registration (DI)</h5>
-    </div>
-    <div class="card-body">
-        <pre class="bg-light p-3"><code>// Program.cs - Configuration-based
-builder.Services.AddAutoCompleteOData(builder.Configuration, "ODataSettings");
-
-// Program.cs - Explicit configuration
-builder.Services.AddAutoCompleteOData(
-    "https://api.example.com/odata/products",
-    options => {
-        options.FilterStrategy = ODataFilterStrategy.Contains;
-        options.Top = 50;
-    });
-
-// appsettings.json
-{
-  "ODataSettings": {
-    "EndpointUrl": "https://api.example.com/odata/products",
-    "FilterStrategy": "Contains",
-    "Top": 50,
-    "Version": "V4"
-  }
-}</code></pre>
-    </div>
-</div>
-
-<div class="card mb-4">
-    <div class="card-header">
         <h5 class="mb-0">Error Handling</h5>
     </div>
     <div class="card-body">
@@ -224,33 +230,19 @@ if (dataSource.LastError != null)
     </div>
 </div>
 
-<h2 class="mt-4">Example OData Endpoint (Minimal API)</h2>
+<h2 class="mt-4">Test the OData Endpoint Directly</h2>
 
 <div class="card mb-4">
     <div class="card-body">
-        <pre class="bg-light p-3"><code>// Using .NET 10 file-based app format
-#:sdk Microsoft.NET.Sdk.Web
-#:package Microsoft.AspNetCore.OData@@10.0.0-preview.1
-#:property PublishAot=false
+        <p>Try these curl commands to test the OData endpoint:</p>
+        <pre class="bg-dark text-light p-3"><code># Get all time zones (top 10)
+curl "@(NavigationManager.BaseUri)odata/timezones?\$top=10"
 
-using Microsoft.AspNetCore.OData;
-using Microsoft.AspNetCore.OData.Query;
+# Filter by StandardName starting with "Ne"
+curl "@(NavigationManager.BaseUri)odata/timezones?\$filter=startswith(StandardName,'Ne')&\$select=DisplayName,StandardName"
 
-var builder = WebApplication.CreateBuilder();
-builder.Services.AddOData();
-
-var app = builder.Build();
-
-app.MapGet("/", (ODataQueryOptions&lt;TimeZoneInfo&gt; options) =>
-{
-    var query = TimeZoneInfo.GetSystemTimeZones().AsQueryable();
-    return options.ApplyTo(query);
-});
-
-app.Run();
-
-// Example query:
-// curl "http://localhost:5000?$top=10&amp;$select=DisplayName,StandardName&amp;$filter=startswith(StandardName,'Ne')"</code></pre>
+# Contains filter on DisplayName
+curl "@(NavigationManager.BaseUri)odata/timezones?\$filter=contains(DisplayName,'Pacific')&\$top=5"</code></pre>
     </div>
 </div>
 
@@ -292,3 +284,63 @@ app.Run();
 <div class="mt-4">
     <a href="/" class="btn btn-secondary">Back to Home</a>
 </div>
+
+@code {
+    private ODataDataSource<TimeZoneDto>? _odataSource;
+    private ODataFilterStrategy _filterStrategy = ODataFilterStrategy.Contains;
+    private string? _selectedTimeZone;
+    private string? _lastError;
+
+    protected override void OnInitialized()
+    {
+        InitializeDataSource();
+    }
+
+    private void InitializeDataSource()
+    {
+        var baseUri = NavigationManager.BaseUri.TrimEnd('/');
+
+        var options = new ODataOptions
+        {
+            EndpointUrl = $"{baseUri}/odata/timezones",
+            FilterStrategy = _filterStrategy,
+            Top = 20,
+            Select = new[] { "Id", "DisplayName", "StandardName", "BaseUtcOffset" },
+            CaseInsensitive = true,
+            ResultsPropertyName = "" // Direct array response
+        };
+
+        _odataSource = new ODataDataSource<TimeZoneDto>(
+            Http,
+            options,
+            searchFieldNames: new[] { "DisplayName", "StandardName" },
+            textSelector: tz => tz.DisplayName);
+
+        _odataSource.ErrorOccurred += (sender, error) =>
+        {
+            _lastError = error;
+            InvokeAsync(StateHasChanged);
+        };
+    }
+
+    private void SetFilterStrategy(ODataFilterStrategy strategy)
+    {
+        _filterStrategy = strategy;
+        _lastError = null;
+        InitializeDataSource();
+    }
+
+    private void OnTimeZoneSelected(TimeZoneDto? tz)
+    {
+        _selectedTimeZone = tz?.DisplayName;
+        _lastError = null;
+    }
+
+    public class TimeZoneDto
+    {
+        public string Id { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public string StandardName { get; set; } = string.Empty;
+        public TimeSpan BaseUtcOffset { get; set; }
+    }
+}
