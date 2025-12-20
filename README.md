@@ -3,10 +3,16 @@
 A high-performance, AI-powered AutoComplete (TypeAhead) component for Blazor applications with semantic search, OData integration, and vector database support. Also known as: autosuggest, combobox, searchable dropdown, live search.
 
 [![NuGet](https://img.shields.io/nuget/v/EasyAppDev.Blazor.AutoComplete.svg)](https://www.nuget.org/packages/EasyAppDev.Blazor.AutoComplete/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/EasyAppDev.Blazor.AutoComplete.svg)](https://www.nuget.org/packages/EasyAppDev.Blazor.AutoComplete/)
+[![GitHub stars](https://img.shields.io/github/stars/mashrulhaque/EasyAppDev.Blazor.AutoComplete?style=social)](https://github.com/mashrulhaque/EasyAppDev.Blazor.AutoComplete)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%209.0%20%7C%2010.0-blue)](https://dotnet.microsoft.com/)
 
-**[Live Demo](https://blazorautocomplete.easyappdev.com/)** | [NuGet Package](https://www.nuget.org/packages/EasyAppDev.Blazor.AutoComplete/) | [Documentation](#documentation)
+**[Live Demo](https://blazorautocomplete.easyappdev.com/)** | [NuGet Package](https://www.nuget.org/packages/EasyAppDev.Blazor.AutoComplete/) | [Get Started](#quick-start)
+
+<p align="center">
+  <img src="https://blazorautocomplete.easyappdev.com/images/demo-preview.gif" alt="Blazor AutoComplete Demo" width="600" />
+</p>
 
 ---
 
@@ -65,6 +71,8 @@ A high-performance, AI-powered AutoComplete (TypeAhead) component for Blazor app
 - [API Reference](#api-reference)
 - [Packages](#packages)
 - [Requirements](#requirements)
+- [Performance](#performance)
+- [Troubleshooting](#troubleshooting)
 - [Support](#support)
 
 ---
@@ -320,7 +328,7 @@ Full control over rendering:
     </HeaderTemplate>
     <FooterTemplate>
         <div class="dropdown-footer text-muted small">
-            Showing @context.Count results
+            Type to search products
         </div>
     </FooterTemplate>
 </AutoComplete>
@@ -1168,6 +1176,53 @@ public static class AutoCompleteConstants
 - **Virtualization:** 60fps scrolling with 100K+ items
 - **First render:** < 50ms
 - **SIMD acceleration:** 3-5x speedup for semantic similarity calculations
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+**Component not rendering / styles missing**
+```html
+<!-- Ensure CSS is added to App.razor or index.html -->
+<link href="_content/EasyAppDev.Blazor.AutoComplete/styles/autocomplete.base.css" rel="stylesheet" />
+```
+
+**Dropdown not opening**
+- Check that `Items` or `DataSource` is not null/empty
+- Verify `MinSearchLength` - default is 1 character before filtering
+
+**Items not filtering**
+- Ensure `TextField` expression returns a non-null string
+- Check `FilterStrategy` matches your use case (StartsWith vs Contains)
+
+**Virtualization not working**
+- Set `Virtualize="true"` explicitly
+- Ensure `ItemHeight` matches your actual item height in pixels
+- Check that item count exceeds `VirtualizationThreshold` (default: 100)
+
+**OData requests failing**
+- Verify `EndpointUrl` is correct and accessible
+- Check CORS configuration on server
+- Use browser DevTools Network tab to inspect generated OData queries
+
+**Semantic search returning no results**
+- Lower `SimilarityThreshold` (try 0.1 instead of 0.15)
+- Ensure `MinSearchLength` is met (default: 3 for AI)
+- Verify OpenAI/Azure API key is valid
+- Check browser console for API errors
+
+**AOT/Trimming build errors**
+- Ensure you're using the latest package version
+- The component is fully AOT-compatible; if issues persist, check for conflicts with other libraries
+
+### Performance Tips
+
+- Use `FilterStrategy.StartsWith` for fastest filtering
+- Enable `Virtualize="true"` for datasets > 100 items
+- Set appropriate `DebounceMs` (300-500ms) to reduce API calls
+- For AI search, enable `PreWarmCache="true"` to pre-generate embeddings
 
 ---
 
