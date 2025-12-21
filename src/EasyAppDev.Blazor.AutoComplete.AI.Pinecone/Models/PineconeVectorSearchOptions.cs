@@ -20,6 +20,8 @@ public class PineconeVectorSearchOptions
     /// <summary>
     /// Optional namespace for logical partitioning within the index.
     /// Default: null (uses default namespace).
+    /// Note: This option is for reference when configuring PineconeVectorStore externally.
+    /// The Semantic Kernel Pinecone connector handles namespaces at the store level.
     /// </summary>
     public string? Namespace { get; set; }
 

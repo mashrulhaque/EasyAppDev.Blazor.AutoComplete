@@ -1,5 +1,8 @@
 using Microsoft.Azure.Cosmos;
+using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel.Connectors.CosmosNoSql;
+using VectorDataDistanceFunction = Microsoft.Extensions.VectorData.DistanceFunction;
+using VectorDataIndexKind = Microsoft.Extensions.VectorData.IndexKind;
 using EasyAppDev.Blazor.AutoComplete.AI.Abstractions;
 using EasyAppDev.Blazor.AutoComplete.AI.CosmosDb.Models;
 
@@ -37,7 +40,60 @@ public class CosmosDbVectorSearchProvider<TItem> : IVectorSearchProvider<TItem>
 
         _container = container;
         _options = options;
-        _collection = vectorStore.GetCollection<string, CosmosDbVectorRecord>(options.ContainerName);
+
+        // Create record definition with runtime-configured dimensions and distance function
+        var definition = CreateRecordDefinition(options);
+        _collection = vectorStore.GetCollection<string, CosmosDbVectorRecord>(options.ContainerName, definition);
+    }
+
+    /// <summary>
+    /// Creates a VectorStoreCollectionDefinition with runtime-configured dimensions and distance function.
+    /// This overrides the hardcoded values in the CosmosDbVectorRecord attributes.
+    /// </summary>
+    private static VectorStoreCollectionDefinition CreateRecordDefinition(CosmosDbVectorSearchOptions options)
+    {
+        return new VectorStoreCollectionDefinition
+        {
+            Properties =
+            [
+                new VectorStoreKeyProperty("Id", typeof(string)),
+                new VectorStoreDataProperty("ItemJson", typeof(string)),
+                new VectorStoreDataProperty("Text", typeof(string)),
+                new VectorStoreVectorProperty("Embedding", typeof(ReadOnlyMemory<float>), options.EmbeddingDimensions)
+                {
+                    DistanceFunction = MapDistanceFunction(options.DistanceFunction),
+                    IndexKind = MapVectorIndexType(options.VectorIndexType)
+                }
+            ]
+        };
+    }
+
+    /// <summary>
+    /// Maps the library's DistanceFunction enum to Semantic Kernel's DistanceFunction string.
+    /// </summary>
+    private static string MapDistanceFunction(AI.Models.DistanceFunction distanceFunction)
+    {
+        return distanceFunction switch
+        {
+            AI.Models.DistanceFunction.Cosine => VectorDataDistanceFunction.CosineSimilarity,
+            AI.Models.DistanceFunction.Euclidean => VectorDataDistanceFunction.EuclideanDistance,
+            AI.Models.DistanceFunction.DotProduct => VectorDataDistanceFunction.DotProductSimilarity,
+            _ => VectorDataDistanceFunction.CosineSimilarity
+        };
+    }
+
+    /// <summary>
+    /// Maps the VectorIndexType option to Semantic Kernel's IndexKind string.
+    /// </summary>
+    private static string MapVectorIndexType(string vectorIndexType)
+    {
+        return vectorIndexType?.ToLowerInvariant() switch
+        {
+            "flat" => VectorDataIndexKind.Flat,
+            "quantizedflat" => VectorDataIndexKind.QuantizedFlat,
+            "diskann" => VectorDataIndexKind.DiskAnn,
+            _ => VectorDataIndexKind.QuantizedFlat
+        };
     }
 
     /// <inheritdoc />

@@ -1,4 +1,6 @@
+using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel.Connectors.PgVector;
+using VectorDataDistanceFunction = Microsoft.Extensions.VectorData.DistanceFunction;
 using EasyAppDev.Blazor.AutoComplete.AI.Abstractions;
 using EasyAppDev.Blazor.AutoComplete.AI.PostgreSql.Models;
 
@@ -31,7 +33,46 @@ public class PostgresVectorSearchProvider<TItem> : IVectorSearchProvider<TItem>
         ValidateOptions(options);
 
         _options = options;
-        _collection = vectorStore.GetCollection<string, VectorRecord>(options.CollectionName);
+
+        // Create record definition with runtime-configured dimensions and distance function
+        var definition = CreateRecordDefinition(options);
+        _collection = vectorStore.GetCollection<string, VectorRecord>(options.CollectionName, definition);
+    }
+
+    /// <summary>
+    /// Creates a VectorStoreCollectionDefinition with runtime-configured dimensions and distance function.
+    /// This overrides the hardcoded values in the VectorRecord attributes.
+    /// </summary>
+    private static VectorStoreCollectionDefinition CreateRecordDefinition(PostgresVectorSearchOptions options)
+    {
+        return new VectorStoreCollectionDefinition
+        {
+            Properties =
+            [
+                new VectorStoreKeyProperty("Id", typeof(string)),
+                new VectorStoreDataProperty("ItemJson", typeof(string)),
+                new VectorStoreDataProperty("Text", typeof(string)),
+                new VectorStoreVectorProperty("Embedding", typeof(ReadOnlyMemory<float>), options.EmbeddingDimensions)
+                {
+                    DistanceFunction = MapDistanceFunction(options.DistanceFunction)
+                }
+            ]
+        };
+    }
+
+    /// <summary>
+    /// Maps the library's DistanceFunction enum to Semantic Kernel's DistanceFunction string.
+    /// </summary>
+    private static string MapDistanceFunction(AI.Models.DistanceFunction distanceFunction)
+    {
+        return distanceFunction switch
+        {
+            AI.Models.DistanceFunction.Cosine => VectorDataDistanceFunction.CosineSimilarity,
+            AI.Models.DistanceFunction.Euclidean => VectorDataDistanceFunction.EuclideanDistance,
+            AI.Models.DistanceFunction.DotProduct => VectorDataDistanceFunction.DotProductSimilarity,
+            AI.Models.DistanceFunction.Manhattan => VectorDataDistanceFunction.ManhattanDistance,
+            _ => VectorDataDistanceFunction.CosineSimilarity
+        };
     }
 
     /// <inheritdoc />

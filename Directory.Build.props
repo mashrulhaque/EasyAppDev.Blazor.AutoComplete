@@ -24,8 +24,8 @@
     <PackageTags>blazor;autocomplete;component;ai;semantic-search;performance;trimming;aot;wcag;accessibility;theming;virtualization</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>1.0.6</Version>
-    <PackageReleaseNotes>Version 1.0.6 - Updated all package READMEs with focused documentation for each package. Added READMEs for vector database providers (PostgreSQL, Azure AI Search, Pinecone, Qdrant, CosmosDB).</PackageReleaseNotes>
+    <Version>1.0.7</Version>
+    <PackageReleaseNotes>Version 1.0.7 - Added AOT-compatible JSON serialization overloads for all vector database providers. Fixed exception handling in GetItem to return default on deserialization failure. Added cancellation token propagation in Azure Search hybrid search. Improved robustness and trimming compatibility.</PackageReleaseNotes>
     <Copyright>Copyright (c) 2025 EasyAppDev</Copyright>
 
     <!-- Documentation -->

@@ -221,12 +221,28 @@ public partial class AutoComplete<TItem> : ComponentBase, IAsyncDisposable
     /// Blazor's default <c>@</c> syntax automatically HTML-encodes output, which is safe.
     /// Only explicitly unescaped content (via MarkupString) can introduce XSS vulnerabilities.
     /// </para>
+    /// <para><b>Safe Patterns:</b></para>
+    /// <list type="bullet">
+    /// <item><description>Using @ for text: <c>@item.Name</c> - Auto-encoded, safe</description></item>
+    /// <item><description>Binding to attributes: <c>title="@item.Description"</c> - Safe</description></item>
+    /// <item><description>Using built-in components: <c>&lt;span class="badge"&gt;@item.Category&lt;/span&gt;</c></description></item>
+    /// </list>
+    /// <para><b>Unsafe Patterns (Avoid with User Input):</b></para>
+    /// <list type="bullet">
+    /// <item><description><c>(MarkupString)item.HtmlContent</c> - XSS vulnerable</description></item>
+    /// <item><description><c>@Html.Raw(item.Description)</c> - XSS vulnerable</description></item>
+    /// <item><description><c>style="@item.UserProvidedStyle"</c> - CSS injection risk</description></item>
+    /// <item><description><c>onclick="@item.UserProvidedScript"</c> - Script injection</description></item>
+    /// </list>
     /// <example>
     /// Safe usage:
     /// <code>
-    /// &lt;AutoComplete ItemTemplate="@(item =&gt; @&lt;span&gt;@item.Name&lt;/span&gt;)" /&gt;
+    /// &lt;AutoComplete ItemTemplate="@(item =&gt; @&lt;div class="item"&gt;
+    ///     &lt;strong&gt;@item.Name&lt;/strong&gt;
+    ///     &lt;span&gt;@item.Description&lt;/span&gt;
+    /// &lt;/div&gt;)" /&gt;
     /// </code>
-    /// Unsafe (avoid with user input):
+    /// Unsafe (XSS vulnerable - avoid with user input):
     /// <code>
     /// &lt;AutoComplete ItemTemplate="@(item =&gt; @((MarkupString)item.HtmlContent))" /&gt;
     /// </code>

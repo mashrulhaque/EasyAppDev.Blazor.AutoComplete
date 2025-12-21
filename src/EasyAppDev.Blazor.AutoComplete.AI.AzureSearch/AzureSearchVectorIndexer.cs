@@ -1,6 +1,8 @@
 using Azure.Search.Documents;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel.Connectors.AzureAISearch;
+using VectorDataDistanceFunction = Microsoft.Extensions.VectorData.DistanceFunction;
 using EasyAppDev.Blazor.AutoComplete.AI.Abstractions;
 using EasyAppDev.Blazor.AutoComplete.AI.Models;
 using EasyAppDev.Blazor.AutoComplete.AI.AzureSearch.Models;
@@ -53,7 +55,46 @@ public class AzureSearchVectorIndexer<TItem> : IVectorIndexer<TItem>
         _textSelector = textSelector;
         _titleSelector = titleSelector;
         _idSelector = idSelector;
-        _collection = vectorStore.GetCollection<string, AzureSearchVectorRecord>(options.IndexName);
+
+        // Create record definition with runtime-configured dimensions and distance function
+        var definition = CreateRecordDefinition(options);
+        _collection = vectorStore.GetCollection<string, AzureSearchVectorRecord>(options.IndexName, definition);
+    }
+
+    /// <summary>
+    /// Creates a VectorStoreCollectionDefinition with runtime-configured dimensions and distance function.
+    /// This overrides the hardcoded values in the AzureSearchVectorRecord attributes.
+    /// </summary>
+    private static VectorStoreCollectionDefinition CreateRecordDefinition(AzureSearchVectorSearchOptions options)
+    {
+        return new VectorStoreCollectionDefinition
+        {
+            Properties =
+            [
+                new VectorStoreKeyProperty("Id", typeof(string)),
+                new VectorStoreDataProperty("ItemJson", typeof(string)),
+                new VectorStoreDataProperty("Content", typeof(string)),
+                new VectorStoreDataProperty("Title", typeof(string)),
+                new VectorStoreVectorProperty("Embedding", typeof(ReadOnlyMemory<float>), options.EmbeddingDimensions)
+                {
+                    DistanceFunction = MapDistanceFunction(options.DistanceFunction)
+                }
+            ]
+        };
+    }
+
+    /// <summary>
+    /// Maps the library's DistanceFunction enum to Semantic Kernel's DistanceFunction string.
+    /// </summary>
+    private static string MapDistanceFunction(AI.Models.DistanceFunction distanceFunction)
+    {
+        return distanceFunction switch
+        {
+            AI.Models.DistanceFunction.Cosine => VectorDataDistanceFunction.CosineSimilarity,
+            AI.Models.DistanceFunction.Euclidean => VectorDataDistanceFunction.EuclideanDistance,
+            AI.Models.DistanceFunction.DotProduct => VectorDataDistanceFunction.DotProductSimilarity,
+            _ => VectorDataDistanceFunction.CosineSimilarity
+        };
     }
 
     /// <inheritdoc />

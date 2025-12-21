@@ -34,6 +34,8 @@ public class PostgresVectorSearchOptions
 
     /// <summary>
     /// Schema name for the collection. Default: public.
+    /// Note: This option is for reference when configuring PostgresVectorStore externally.
+    /// The Semantic Kernel PostgreSQL connector uses the default schema.
     /// </summary>
     public string Schema { get; set; } = "public";
 
@@ -46,18 +48,23 @@ public class PostgresVectorSearchOptions
     /// <summary>
     /// Whether to create an HNSW index for faster approximate search.
     /// Default: true. Set to false for exact search on small datasets.
+    /// Note: Configure HNSW index via PostgreSQL/pgvector directly after collection creation.
+    /// The Semantic Kernel connector creates a basic collection without indexes.
     /// </summary>
     public bool CreateHnswIndex { get; set; } = true;
 
     /// <summary>
     /// HNSW index parameter: max connections per layer. Default: 16.
     /// Higher values = better recall, slower builds, more memory.
+    /// Note: Apply via PostgreSQL after collection creation:
+    /// CREATE INDEX ON collection USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
     /// </summary>
     public int HnswM { get; set; } = 16;
 
     /// <summary>
     /// HNSW index parameter: size of dynamic candidate list. Default: 64.
     /// Higher values = better recall during index building.
+    /// Note: Apply via PostgreSQL after collection creation (see HnswM).
     /// </summary>
     public int HnswEfConstruction { get; set; } = 64;
 }

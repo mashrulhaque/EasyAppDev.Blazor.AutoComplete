@@ -42,6 +42,8 @@ public class CosmosDbVectorSearchOptions
 
     /// <summary>
     /// Partition key path. Default: /id.
+    /// Note: This option is for reference when configuring CosmosDB container externally.
+    /// The Semantic Kernel connector uses the container's existing partition key.
     /// </summary>
     public string PartitionKeyPath { get; set; } = "/id";
 
@@ -51,6 +53,7 @@ public class CosmosDbVectorSearchOptions
     /// - flat: Exact search, suitable for small datasets.
     /// - quantizedFlat: Compressed vectors for memory efficiency.
     /// - diskANN: High-performance approximate search using DiskANN algorithm.
+    /// This option is applied when creating the collection via VectorStoreRecordDefinition.
     /// </summary>
     public string VectorIndexType { get; set; } = "quantizedFlat";
 }

@@ -33,6 +33,121 @@ internal static partial class ErrorSanitizationRegex
 }
 
 /// <summary>
+/// Security: Detects common prompt injection patterns in user input.
+/// These patterns attempt to manipulate AI/embedding behavior.
+/// </summary>
+internal static class PromptInjectionDetector
+{
+    /// <summary>
+    /// Known prompt injection patterns (case-insensitive).
+    /// These are common attack vectors used to manipulate AI systems.
+    /// </summary>
+    private static readonly string[] InjectionPatterns =
+    [
+        // Instruction override attempts
+        "ignore previous",
+        "ignore above",
+        "ignore all",
+        "disregard previous",
+        "disregard above",
+        "forget previous",
+        "forget above",
+        "forget all",
+        "override previous",
+        "override instructions",
+
+        // System prompt extraction attempts
+        "system prompt",
+        "system message",
+        "initial prompt",
+        "original prompt",
+        "show me your",
+        "reveal your",
+        "what are your instructions",
+        "what were you told",
+
+        // Role manipulation
+        "you are now",
+        "pretend you are",
+        "act as if",
+        "roleplay as",
+        "behave as",
+        "from now on",
+
+        // Jailbreak attempts
+        "do anything now",
+        "dan mode",
+        "developer mode",
+        "jailbreak",
+        "bypass",
+        "no restrictions",
+        "without limits",
+
+        // Delimiter injection
+        "```system",
+        "[system]",
+        "<|im_start|>",
+        "<|im_end|>",
+        "###",
+
+        // Encoding bypass attempts
+        "base64",
+        "rot13",
+        "hex encode"
+    ];
+
+    /// <summary>
+    /// Checks if the input contains potential prompt injection patterns.
+    /// </summary>
+    /// <param name="input">The text to check.</param>
+    /// <returns>True if potential injection detected, false otherwise.</returns>
+    public static bool ContainsInjectionPattern(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return false;
+        }
+
+        var lowerInput = input.ToLowerInvariant();
+
+        foreach (var pattern in InjectionPatterns)
+        {
+            if (lowerInput.Contains(pattern))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Gets the first detected injection pattern, if any.
+    /// </summary>
+    /// <param name="input">The text to check.</param>
+    /// <returns>The matched pattern or null if none found.</returns>
+    public static string? GetMatchedPattern(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return null;
+        }
+
+        var lowerInput = input.ToLowerInvariant();
+
+        foreach (var pattern in InjectionPatterns)
+        {
+            if (lowerInput.Contains(pattern))
+            {
+                return pattern;
+            }
+        }
+
+        return null;
+    }
+}
+
+/// <summary>
 /// Provides high-performance semantic search functionality for AutoComplete using AI embeddings.
 /// Uses SIMD-accelerated cosine similarity and intelligent caching for optimal performance.
 /// </summary>
@@ -278,7 +393,7 @@ public class SemanticSearchDataSource<TItem> : IAutoCompleteDataSource<TItem> wh
 
     /// <summary>
     /// Sanitizes text before sending to embedding API to prevent prompt injection and excessive costs.
-    /// Removes control characters and truncates to maximum length.
+    /// Removes control characters, detects injection patterns, and truncates to maximum length.
     /// </summary>
     /// <param name="input">The text to sanitize.</param>
     /// <param name="context">Context for logging (e.g., "query", "item-0").</param>
@@ -295,6 +410,23 @@ public class SemanticSearchDataSource<TItem> : IAutoCompleteDataSource<TItem> wh
         var sanitized = new string(input
             .Where(c => c != '\0' && (char.IsWhiteSpace(c) || !char.IsControl(c)))
             .ToArray());
+
+        // SECURITY: Detect and log potential prompt injection attempts
+        var injectionPattern = PromptInjectionDetector.GetMatchedPattern(sanitized);
+        if (injectionPattern != null)
+        {
+            _logger?.LogWarning(
+                "[SECURITY] Potential prompt injection detected in {Context}. Pattern: '{Pattern}'. Input length: {Length}",
+                context,
+                injectionPattern,
+                sanitized.Length);
+
+            // Note: We still allow the search to proceed because:
+            // 1. Embedding models are not as susceptible to injection as LLMs
+            // 2. False positives are possible (e.g., legitimate search for "system prompt")
+            // 3. The input is already sanitized of control characters
+            // Logging allows security teams to monitor for abuse patterns
+        }
 
         // Truncate to max length to prevent excessive API costs and timeouts
         if (sanitized.Length > _maxEmbeddingTextLength)
@@ -424,7 +556,8 @@ public class SemanticSearchDataSource<TItem> : IAutoCompleteDataSource<TItem> wh
             catch (OperationCanceledException)
             {
                 // Cancellation is expected during rapid typing (debounce) - silently return empty results
-                _logger?.LogDebug("Search for '{SearchText}' was canceled (likely due to debounce)", searchText);
+                // SECURITY: Don't log actual search text to avoid PII exposure
+                _logger?.LogDebug("Search was canceled (likely due to debounce). Text length: {Length}", searchText.Length);
                 return Enumerable.Empty<TItem>();
             }
             catch (Exception ex)
@@ -433,12 +566,13 @@ public class SemanticSearchDataSource<TItem> : IAutoCompleteDataSource<TItem> wh
                 var sanitizedError = SanitizeErrorMessage(ex.InnerException?.Message ?? ex.Message);
                 _lastError = $"Failed to generate embedding: {sanitizedError}";
 
-                // Log full details for admin (not exposed to user)
+                // SECURITY: Log only metadata, not actual search text (PII protection)
+                // Actual search content may contain sensitive user data
                 _logger?.LogError(
                     ex,
-                    "[SECURITY] Embedding generation failed for search text length: {Length}. First 50 chars: {Preview}",
+                    "[SECURITY] Embedding generation failed. Search text length: {Length}, First char code: {FirstChar}",
                     searchText.Length,
-                    searchText.Length > 50 ? searchText.Substring(0, 50) : searchText);
+                    searchText.Length > 0 ? (int)searchText[0] : 0);
 
                 ErrorOccurred?.Invoke(this, _lastError);
                 return Enumerable.Empty<TItem>();
@@ -509,10 +643,11 @@ public class SemanticSearchDataSource<TItem> : IAutoCompleteDataSource<TItem> wh
                 }
             }
 
+            // SECURITY: Log only metadata for PII protection (search text may contain sensitive data)
             _logger?.LogDebug(
-                "Semantic search returned {Count} results for query: {SearchText}. Query cache hit rate: {QueryHitRate:P2}, Item cache hit rate: {ItemHitRate:P2}",
+                "Semantic search returned {Count} results. Query length: {QueryLength}. Query cache hit rate: {QueryHitRate:P2}, Item cache hit rate: {ItemHitRate:P2}",
                 results.Count,
-                searchText,
+                searchText.Length,
                 _queryCache.HitRate,
                 _itemCache.HitRate);
 
@@ -536,10 +671,11 @@ public class SemanticSearchDataSource<TItem> : IAutoCompleteDataSource<TItem> wh
 
                 if (textMatches.Any())
                 {
+                    // SECURITY: Don't log search text for PII protection
                     _logger?.LogDebug(
-                        "Hybrid search: Added {Count} text-based matches for query: {SearchText}",
+                        "Hybrid search: Added {Count} text-based matches. Query length: {QueryLength}",
                         textMatches.Count,
-                        searchText);
+                        searchText.Length);
                     results.AddRange(textMatches);
                 }
             }

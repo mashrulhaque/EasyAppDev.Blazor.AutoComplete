@@ -19,11 +19,15 @@ public class QdrantVectorSearchOptions
 
     /// <summary>
     /// Use HTTPS. Default: false for local, true for cloud.
+    /// Note: This option is for reference when configuring QdrantVectorStore externally.
+    /// Pass this value when creating the Qdrant client.
     /// </summary>
     public bool Https { get; set; }
 
     /// <summary>
     /// API key for Qdrant Cloud. Optional for self-hosted instances.
+    /// Note: This option is for reference when configuring QdrantVectorStore externally.
+    /// Pass this value when creating the Qdrant client.
     /// </summary>
     public string? ApiKey { get; set; }
 
@@ -52,6 +56,8 @@ public class QdrantVectorSearchOptions
     /// <summary>
     /// Whether to create an HNSW index on collection creation.
     /// Default: true. HNSW provides fast approximate nearest neighbor search.
+    /// Note: Qdrant uses HNSW by default. This option is for documentation purposes.
+    /// Configure HNSW parameters when creating the collection via Qdrant client.
     /// </summary>
     public bool CreateHnswIndex { get; set; } = true;
 }

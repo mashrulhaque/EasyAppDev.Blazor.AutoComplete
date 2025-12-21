@@ -18,8 +18,14 @@ public class PineconeVectorRecordTests
         // Get the internal PineconeVectorRecord type via reflection
         var assembly = typeof(EasyAppDev.Blazor.AutoComplete.AI.Pinecone.PineconeVectorSearchProvider<>).Assembly;
         _vectorRecordType = assembly.GetType("EasyAppDev.Blazor.AutoComplete.AI.Pinecone.Models.PineconeVectorRecord")!;
-        _createMethod = _vectorRecordType.GetMethod("Create")!;
-        _getItemMethod = _vectorRecordType.GetMethod("GetItem")!;
+
+        // Get the 4-parameter Create overload (id, item, text, embedding)
+        _createMethod = _vectorRecordType.GetMethods()
+            .First(m => m.Name == "Create" && m.GetParameters().Length == 4);
+
+        // Get the parameterless GetItem overload
+        _getItemMethod = _vectorRecordType.GetMethods()
+            .First(m => m.Name == "GetItem" && m.GetParameters().Length == 0);
     }
 
     [Fact]

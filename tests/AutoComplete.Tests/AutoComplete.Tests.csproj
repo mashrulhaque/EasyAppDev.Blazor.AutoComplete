@@ -5,6 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <!-- Suppress AOT/trimming warnings in tests - reflection is commonly used for test verification -->
+    <NoWarn>$(NoWarn);IL2026;IL2060;IL2075;IL2077;IL2080;IL3050</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
